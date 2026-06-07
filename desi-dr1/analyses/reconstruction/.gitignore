@@ -1,0 +1,5 @@
+# lightcone-cli
+.lightcone/Snakefile
+.lightcone/snakefile-config.json
+.snakemake/
+.snakemake.legacy/

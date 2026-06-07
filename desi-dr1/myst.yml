@@ -1,0 +1,22 @@
+version: 1
+project:
+  title: DESI DR1 BAO Analysis
+  authors:
+    - name: DESI Collaboration
+  keywords:
+    - cosmology
+    - bao
+    - desi
+  plugins:
+    - local/astra-plugin.mjs
+  toc:
+    - file: index.md
+    - file: reconstruction.md
+    - file: clustering.md
+site:
+  # astra-theme — this repo IS the theme (../.. = the astra-theme Remix app, a
+  # standalone fork of @myst-theme/book with the ASTRA renderers compiled in).
+  # MyST resolves a local template by path; once astra-theme is published to the
+  # registry the one-liner `template: astra-theme` works for everyone.
+  template: ../..
+  title: DESI DR1 BAO Analysis

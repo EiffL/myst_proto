@@ -1,0 +1,8 @@
+id: baseline
+description: DESI 2024 paper fiducial reconstruction (IterativeFFT, RecSym, sm15, fixed bias, 3 iterations).
+decisions:
+  algorithm: iterative_fft
+  convention: recsym
+  bias_input: fixed
+  n_iterations: n3
+  # smoothing_radius is inherited from the root (see ../astra.yaml)

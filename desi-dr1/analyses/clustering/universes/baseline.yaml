@@ -1,0 +1,4 @@
+id: baseline
+description: DESI 2024 paper fiducial clustering settings (imaging weights on).
+decisions:
+  imaging_weights: "on"

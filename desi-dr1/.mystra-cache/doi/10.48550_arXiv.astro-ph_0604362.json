@@ -1,0 +1,42 @@
+{
+  "type": "article-journal",
+  "id": "https://doi.org/10.48550/arxiv.astro-ph/0604362",
+  "categories": [
+    "Astrophysics (astro-ph)",
+    "FOS: Physical sciences",
+    "FOS: Physical sciences"
+  ],
+  "author": [
+    {
+      "family": "Eisenstein",
+      "given": "Daniel J."
+    },
+    {
+      "family": "Seo",
+      "given": "Hee-jong"
+    },
+    {
+      "family": "Sirko",
+      "given": "Edwin"
+    },
+    {
+      "family": "Spergel",
+      "given": "David"
+    }
+  ],
+  "issued": {
+    "date-parts": [
+      [
+        2006
+      ]
+    ]
+  },
+  "abstract": "The baryon acoustic oscillations are a promising route to the precision measure of the cosmological distance scale and hence the measurement of the time evolution of dark energy. We show that the non-linear degradation of the acoustic signature in the correlations of low-redshift galaxies is a correctable process. By suitable reconstruction of the linear density field, one can sharpen the acoustic peak in the correlation function or, equivalently, restore the higher harmonics of the oscillations in the power spectrum. With this, one can achieve better measurements of the acoustic scale for a given survey volume. Reconstruction is particularly effective at low redshift, where the non-linearities are worse but where the dark energy density is highest. At z=0.3, we find that one can reduce the sample variance error bar on the acoustic scale by at least a factor of 2 and in principle by nearly a factor of 4. We discuss the significant implications our results have for the design of galaxy surveys aimed at measuring the distance scale through the acoustic peak.",
+  "container-title": "arXiv",
+  "DOI": "10.48550/ARXIV.ASTRO-PH/0604362",
+  "publisher": "arXiv",
+  "title": "Improving Cosmological Distance Measurements by Reconstruction of the Baryon Acoustic Peak",
+  "URL": "https://arxiv.org/abs/astro-ph/0604362",
+  "copyright": "Assumed arXiv.org perpetual, non-exclusive license to distribute this article for submissions made before January 2004",
+  "version": "1"
+}

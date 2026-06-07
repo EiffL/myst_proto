@@ -1,0 +1,306 @@
+version: "1.0"
+name: Clustering
+
+narrative:
+  summary: |
+    Two-point correlation function ξ(s, μ) for DESI DR1 galaxy
+    tracers. Per-tracer fan-out: `xi_{pre,post}_recon_<tracer>`.
+    Composite tracers (LRG3+ELG1) union multiple parent NPZs and
+    z-slice their catalogs at ξ time.
+  findings: |
+    The pre- and post-recon ξ_ℓ(s) multipoles plotted as s² ξ(s) show
+    the BAO feature at s ~ 100 Mpc/h across all eight tracers, with
+    the post-recon monopole exhibiting a sharper BAO peak than its
+    pre-recon counterpart — the qualitative signature reconstruction
+    is meant to deliver.
+
+    ![ξ(s) multipoles per tracer (pre and post reconstruction)](#outputs.xi_multipoles_plot)
+  methods: |
+    Computes Landy–Szalay ξ(s, μ) multipoles (ℓ = 0, 2, 4) on
+    linear 4 Mpc/h s-binning from 0 to 200 Mpc/h, NGC + SGC
+    separately then combined (GCcomb). Pre-recon ξ is from raw
+    catalogs; post-recon ξ uses the RecSym estimator with shifted
+    data + shifted randoms + unshifted randoms, sliced from the
+    parent post-recon catalog by the tracer z-range. The binning,
+    μ-binning, estimator, and ℓ range are all fixed by
+    cov-compatibility with the ingested RascalC files, which is
+    why no binning decision is exposed — only
+    [imaging_weights](#decisions.imaging_weights) is a knob here,
+    toggling the DESI WEIGHT_SYS factor on or off.
+  inputs: |
+    Consumes the raw [DESI DR1 LSS catalogs](#inputs.desi_dr1_lss_catalogs)
+    and [tabulated DESI fiducial cosmology](#inputs.desi_fiducial_cosmology)
+    directly, the shifted parent catalogs
+    [post_recon_catalog_lrg_full](#inputs.post_recon_catalog_lrg_full)
+    and [post_recon_catalog_elg_full](#inputs.post_recon_catalog_elg_full)
+    from [reconstruction](#../analyses.reconstruction), and the
+    per-tracer RascalC covariance files (error-band overlays only —
+    not used in the ξ computation itself).
+  outputs: |
+    One `xi_pre_recon_<tracer>` and one `xi_post_recon_<tracer>` per
+    tracer (BGS, LRG1/2/3, ELG1/2, LRG3+ELG1, QSO), plus a diagnostic
+    [ξ multipoles figure](#outputs.xi_multipoles_plot). ELG2 and
+    LRG3+ELG1 are cloned from the DESI VAC and rebinned — see
+    CLAUDE.md for which of those is a real pipeline limitation and
+    which is a compute-budget shortcut.
+
+inputs:
+  - id: desi_dr1_lss_catalogs
+    type: data
+    from: desi_dr1_lss_catalogs          # parent: raw catalogs (pre-recon xi)
+
+  - id: desi_fiducial_cosmology
+    type: data
+    from: desi_fiducial_cosmology        # parent: z -> r(z) table
+
+  - id: post_recon_catalog_bgs_full
+    type: data
+    from: reconstruction.post_recon_catalog_bgs_full   # sibling: BGS parent post-recon
+  - id: post_recon_catalog_lrg_full
+    type: data
+    from: reconstruction.post_recon_catalog_lrg_full   # sibling: LRG parent post-recon
+  - id: post_recon_catalog_elg_full
+    type: data
+    from: reconstruction.post_recon_catalog_elg_full   # sibling: ELG parent post-recon
+  - id: post_recon_catalog_qso_full
+    type: data
+    from: reconstruction.post_recon_catalog_qso_full   # sibling: QSO parent post-recon
+
+  - id: desi_rascalc_cov_bgs
+    type: data
+    from: desi_rascalc_cov_bgs           # parent: cov (BGS error bands)
+  - id: desi_rascalc_cov_lrg1
+    type: data
+    from: desi_rascalc_cov_lrg1          # parent: cov (LRG1 error bands)
+  - id: desi_rascalc_cov_lrg2
+    type: data
+    from: desi_rascalc_cov_lrg2          # parent: cov (LRG2 error bands)
+  - id: desi_rascalc_cov_lrg3
+    type: data
+    from: desi_rascalc_cov_lrg3          # parent: cov (LRG3 error bands)
+  - id: desi_rascalc_cov_elg1
+    type: data
+    from: desi_rascalc_cov_elg1          # parent: cov (ELG1 error bands)
+  - id: desi_rascalc_cov_elg2
+    type: data
+    from: desi_rascalc_cov_elg2          # parent: cov (ELG2 error bands)
+  - id: desi_rascalc_cov_lrg3_elg1
+    type: data
+    from: desi_rascalc_cov_lrg3_elg1     # parent: cov (LRG3+ELG1 error bands)
+  - id: desi_rascalc_cov_qso
+    type: data
+    from: desi_rascalc_cov_qso           # parent: cov (QSO error bands)
+
+outputs:
+  # --- BGS (1D-fit tracer, z=0.1-0.4) -----------------------------------------
+  - id: xi_pre_recon_bgs
+    type: data
+    description: "Pre-recon xi(s, mu) for BGS (z=0.1-0.4). Monopole-only fit."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer bgs
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_bgs
+    type: data
+    description: "Post-recon xi(s, mu) for BGS (RecSym). BGS parent recon spans 0.1 <= z <= 0.4 (no sub-binning)."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer bgs
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- LRG1 -------------------------------------------------------------------
+  - id: xi_pre_recon_lrg1
+    type: data
+    description: |
+      Pre-recon xi(s, mu) for LRG1. pycorr TwoPointCorrelationFunction (.npy),
+      GCcomb, s in [0, 200] Mpc/h at 4 Mpc/h bins, mu in [-1, 1] at 200 bins.
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_lrg1
+    type: data
+    description: |
+      Post-recon xi(s, mu) for LRG1 (RecSym). Slices the LRG parent post-recon
+      catalog to 0.4 <= z <= 0.6.
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- LRG2 -------------------------------------------------------------------
+  - id: xi_pre_recon_lrg2
+    type: data
+    description: "Pre-recon xi(s, mu) for LRG2. Same format as xi_pre_recon_lrg1."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg2
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_lrg2
+    type: data
+    description: "Post-recon xi(s, mu) for LRG2 (RecSym). Slices LRG parent NPZ to 0.6 <= z <= 0.8."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg2
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- LRG3 -------------------------------------------------------------------
+  - id: xi_pre_recon_lrg3
+    type: data
+    description: "Pre-recon xi(s, mu) for LRG3 (z=0.8-1.1). Same format as xi_pre_recon_lrg1."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg3
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_lrg3
+    type: data
+    description: "Post-recon xi(s, mu) for LRG3 (RecSym). Slices LRG parent NPZ to 0.8 <= z <= 1.1."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg3
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- ELG1 (1D-fit tracer) ---------------------------------------------------
+  - id: xi_pre_recon_elg1
+    type: data
+    description: "Pre-recon xi(s, mu) for ELG1 (z=0.8-1.1). Monopole-only fit."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer elg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_elg1
+    type: data
+    description: "Post-recon xi(s, mu) for ELG1 (RecSym). Slices ELG parent NPZ to 0.8 <= z <= 1.1."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer elg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- ELG2 (2D-fit tracer) ---------------------------------------------------
+  - id: xi_pre_recon_elg2
+    type: data
+    description: "Pre-recon xi(s, mu) for ELG2 (z=1.1-1.6). Same format as xi_pre_recon_lrg1."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer elg2
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_elg2
+    type: data
+    description: "Post-recon xi(s, mu) for ELG2 (RecSym). Slices ELG parent NPZ to 1.1 <= z <= 1.6."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer elg2
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- LRG3 + ELG1 combined ---------------------------------------------------
+  - id: xi_pre_recon_lrg3_elg1
+    type: data
+    description: "Pre-recon xi(s, mu) for the LRG3+ELG1 combined tracer (0.8 < z < 1.1)."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg3_elg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "4h" }
+
+  - id: xi_post_recon_lrg3_elg1
+    type: data
+    description: "Post-recon xi(s, mu) for the LRG3+ELG1 combined tracer (RecSym)."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer lrg3_elg1
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "4h" }
+
+  # --- QSO (1D-fit tracer, z=0.8-2.1) -----------------------------------------
+  - id: xi_pre_recon_qso
+    type: data
+    description: "Pre-recon xi(s, mu) for QSO (z=0.8-2.1). Monopole-only fit."
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer qso
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  - id: xi_post_recon_qso
+    type: data
+    description: |
+      Post-recon xi(s, mu) for QSO (RecSym, sm30). QSO parent recon spans
+      0.8 <= z <= 2.1 (no sub-binning) with Sigma_sm = 30 h^-1 Mpc — matches
+      the sm30 RascalC cov.
+    decisions: [imaging_weights]
+    recipe:
+      command: >-
+        python -u scripts/compute_xi.py --output {output} --tracer qso
+        --imaging_weights {decisions.imaging_weights}
+      resources: { cpus: 32, memory: "128GB", time_limit: "2h" }
+
+  # --- Aggregate plot ---------------------------------------------------------
+  - id: xi_multipoles_plot
+    type: figure
+    description: |
+      Pre- and post-recon xi_ell(s) multipoles (ell = 0, 2, 4) plotted as
+      s^2 * xi(s), one row per tracer so the BAO feature at s ~ 100 Mpc/h
+      is visible. Post-recon monopole should show a sharper BAO peak.
+    inputs: [xi_pre_recon_bgs, xi_post_recon_bgs,
+             xi_pre_recon_lrg1, xi_post_recon_lrg1,
+             xi_pre_recon_lrg2, xi_post_recon_lrg2,
+             xi_pre_recon_lrg3, xi_post_recon_lrg3,
+             xi_pre_recon_elg1, xi_post_recon_elg1,
+             xi_pre_recon_elg2, xi_post_recon_elg2,
+             xi_pre_recon_lrg3_elg1, xi_post_recon_lrg3_elg1,
+             xi_pre_recon_qso, xi_post_recon_qso]
+    recipe:
+      command: python -u scripts/plot_xi.py --output {output}
+
+decisions:
+
+  imaging_weights:
+    label: "Imaging-systematics weights"
+    tags: [clustering, systematics]
+    rationale: |
+      BAO is insensitive to the imaging-systematics correction (largest
+      shift 0.27 sigma across tracers). This decision exposes that null
+      test. `on` uses the full DESI `WEIGHT` column
+      (WEIGHT_COMP * WEIGHT_SYS * WEIGHT_ZFAIL). `off` drops the WEIGHT_SYS
+      factor, keeping only completeness + redshift-failure corrections.
+    default: "on"
+    options:
+      "on":
+        label: "On (default)"
+        description: "Full WEIGHT * WEIGHT_FKP, matches DESI fiducial clustering."
+      "off":
+        label: "Off (no imaging correction)"
+        description: "WEIGHT_COMP * WEIGHT_ZFAIL * WEIGHT_FKP -- 'No weight' null test."

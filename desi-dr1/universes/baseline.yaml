@@ -1,0 +1,22 @@
+id: baseline
+description: DESI 2024 paper fiducial configuration for LRG1 + LRG2 reproduction.
+decisions:
+  covariance_source: desi_vac
+  smoothing_radius: sm15
+  smoothing_radius_qso: sm30
+  broadband: spline
+  damping_prior: gaussian
+  fit_range: default
+  ells: twod
+  damping_centers: fiducial
+  template_cosmology: c000
+  fog_placement: smooth_only
+  dewiggling_method: peak_average
+  dilate_model_component: wiggle_only
+  systematic_error_treatment: include
+  fitting_method: sampling
+analyses:
+  reconstruction:
+    universe: baseline
+  clustering:
+    universe: baseline

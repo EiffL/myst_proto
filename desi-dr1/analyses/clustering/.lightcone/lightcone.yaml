@@ -1,0 +1,2 @@
+target: slurm
+scratch_root: $SCRATCH
