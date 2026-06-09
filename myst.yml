@@ -8,7 +8,7 @@ project:
     - bao
     - desi
   plugins:
-    - local/astra-plugin.mjs
+    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.1/mystra.mjs
   toc:
     - file: index.md
     - file: reconstruction.md
