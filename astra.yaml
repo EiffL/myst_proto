@@ -846,7 +846,18 @@ outputs:
   # --- Tables: one row per (tracer, recon) ---
   - id: bao_alpha_values
     type: table
-    description: "alpha_iso / alpha_AP / r_off / chi2/dof per (tracer, recon)."
+    description: |
+      BAO dilation parameters for all eight DESI DR1 tracer–redshift bins,
+      before (`Pre`) and after (`Post`) reconstruction. Each row gives the
+      posterior mean and dispersion of the isotropic dilation
+      $\alpha_\mathrm{iso}$ (`qiso`, `alpha1_*`) and — for the 2D fits —
+      the anisotropic Alcock–Paczyński parameter $\alpha_\mathrm{AP}$
+      (`qap`, `alpha2_*`); the 1D-fit tracers (BGS, ELG1, QSO) constrain
+      $\alpha_\mathrm{iso}$ only. The `_std` columns fold in the combined
+      modelling-systematic budget, with the statistical-only error kept in
+      `_std_stat`; `r_off` is the posterior correlation between the two
+      $\alpha$'s, and the last two columns give the fit $\chi^2$ and the
+      number of degrees of freedom.
     decisions: [systematic_error_treatment]
     inputs: [bao_fit_pre_iso_bgs, bao_fit_post_iso_bgs,
              bao_fit_pre_iso_ap_lrg1, bao_fit_post_iso_ap_lrg1,
@@ -1032,7 +1043,17 @@ outputs:
 
   - id: bao_fit_plot
     type: figure
-    description: "Isolated BAO feature + best-fit xi model, pre vs post, one row per tracer."
+    description: |
+      The isolated BAO feature in the DESI DR1 correlation functions.
+      Each panel shows $s^2\,\Delta\xi_\ell(s)$ — the measured multipole
+      minus the smooth (no-wiggle) part of the best-fit model — for one
+      tracer–redshift bin, before (open symbols) and after (filled
+      symbols) density-field reconstruction, with the best-fit damped-BAO
+      template overlaid as solid curves. Two-row panels show the monopole
+      ($\ell=0$, top) and quadrupole ($\ell=2$, bottom) for the tracers
+      fit in 2D; the 1D-fit tracers show the monopole only. The acoustic
+      peak near $s \approx 100\,h^{-1}\,\mathrm{Mpc}$ is visibly sharper
+      after reconstruction.
     inputs: [bao_fit_isolated_bgs,
              bao_fit_isolated_lrg1, bao_fit_isolated_lrg2, bao_fit_isolated_lrg3,
              bao_fit_isolated_elg1, bao_fit_isolated_elg2,
@@ -1190,7 +1211,14 @@ outputs:
 
   - id: bao_detection_plot
     type: figure
-    description: "delta-chi2 vs alpha_iso for BAO vs noBAO fits; detection significance per tracer."
+    description: |
+      BAO detection significance per tracer. $\Delta\chi^2$ between a
+      no-BAO (broadband-only) reference and the damped-BAO template, as a
+      function of the isotropic dilation $\alpha_\mathrm{iso}$, for each
+      post-reconstruction correlation function. A well-defined minimum
+      near $\alpha_\mathrm{iso} = 1$ signals a detection of the acoustic
+      feature at the expected scale, and the depth of the minimum sets
+      the per-tracer detection significance quoted in the legend.
     inputs: [bao_detection_chi2_bgs,
              bao_detection_chi2_lrg1, bao_detection_chi2_lrg2, bao_detection_chi2_lrg3,
              bao_detection_chi2_elg1, bao_detection_chi2_elg2,
@@ -1204,9 +1232,17 @@ outputs:
   - id: bao_distance_table
     type: table
     description: |
-      Final BAO distance constraints D_M/r_d, D_H/r_d, D_V/r_d, D_M/D_H per
-      post-recon tracer with systematic budget folded in. 1D tracers
-      (BGS, ELG1, QSO) report only D_V/r_d.
+      Final DESI DR1 BAO distance constraints, per tracer at its
+      effective redshift $z_\mathrm{eff}$: the comoving transverse
+      distance $D_M/r_d$, the Hubble distance $D_H/r_d$, the
+      angle-averaged distance $D_V/r_d$, and the ratio $D_M/D_H$, all
+      relative to the sound horizon at the drag epoch $r_d$. Values are
+      derived from the post-reconstruction chains, with the combined
+      modelling + HOD + fiducial-cosmology systematic budget folded into
+      the quoted uncertainties (`_std` columns); `r_off` is the
+      $D_M$–$D_H$ posterior correlation. The 1D-fit tracers (BGS, ELG1,
+      QSO) constrain only $D_V/r_d$, so their $D_M$ and $D_H$ entries
+      are empty.
     decisions: [systematic_error_treatment]
     inputs: [bao_fit_post_iso_bgs,
              bao_fit_post_iso_ap_lrg1, bao_fit_post_iso_ap_lrg2,
@@ -1234,9 +1270,13 @@ outputs:
   - id: hubble_diagram_plot
     type: figure
     description: |
-      BAO Hubble diagram of D_M/r_d, D_H/r_d, D_V/r_d, D_M/D_H ratios to
-      fiducial Planck 2018-ΛCDM; DESI DR1 stars overlaid on prior surveys
-      (6dFGS, WiggleZ, SDSS DR16, DES Y6).
+      The DESI DR1 BAO distances on the Hubble diagram. From top to
+      bottom: $D_M/r_d$, $D_H/r_d$, $D_V/r_d$, and $D_M/D_H$ as a
+      function of redshift, each divided by the prediction of the DESI
+      fiducial cosmology (Planck 2018 $\Lambda$CDM), so the line at
+      unity is the fiducial model. Coloured points are the DESI DR1
+      tracers measured in this analysis; grey symbols are earlier
+      measurements from 6dFGS, WiggleZ, SDSS DR16, and DES Y6.
     inputs: [bao_distance_table,
              bao_fit_post_iso_bgs,
              bao_fit_post_iso_ap_lrg1, bao_fit_post_iso_ap_lrg2,
