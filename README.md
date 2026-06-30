@@ -86,11 +86,11 @@ element's own label/claim):
 {astra}`few-fold precision loss <prior_insights/precision_loss_factor_three>`
 ```
 
-**Numbered cross-references** — `{astra:num}` (like `{numref}`; supports `%s`):
+**Numbered cross-references** — `{astra:numref}` (like `{numref}`; supports `%s`):
 
 ```markdown
-{astra:num}`outputs/bao_fit_plot`            → Figure 1
-{astra:num}`see Fig. %s <outputs/bao_fit_plot>`
+{astra:numref}`outputs/bao_fit_plot`            → Figure 1
+{astra:numref}`see Fig. %s <outputs/bao_fit_plot>`
 ```
 
 Inline **value interpolation** — never hard-type a measured number; pull it

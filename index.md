@@ -140,7 +140,7 @@ reconstruction {astra}`reduces the non-linear BAO damping <prior_insights/recon_
 ### 4.1 Detection and peak sharpening
 
 The most direct view of the measurement is the acoustic feature itself.
-{astra:num}`outputs/bao_fit_plot` isolates it by subtracting the smooth part of the
+{astra:numref}`outputs/bao_fit_plot` isolates it by subtracting the smooth part of the
 best-fit model from each measured multipole: in every tracer the
 post-reconstruction peak is visibly narrower and better matched by the
 template than its pre-reconstruction counterpart — the peak
@@ -151,7 +151,7 @@ template than its pre-reconstruction counterpart — the peak
 
 To quantify whether the feature is detected at all, each post-reconstruction
 correlation function is refit with the BAO wiggles removed, and
-{astra:num}`outputs/bao_detection_plot` profiles the $\chi^2$ difference between the
+{astra:numref}`outputs/bao_detection_plot` profiles the $\chi^2$ difference between the
 two models as a function of $\alpha_\mathrm{iso}$. Every tracer develops a
 well-defined minimum near the fiducial scale — weakest for the sparse 1D
 tracers, strongest for the combined LRG3+ELG1 bin.
@@ -175,7 +175,7 @@ $\sigma(\alpha_\mathrm{iso})$ contracts from
 {astra:value}`outputs/bao_alpha_values tracer=elg1 recon=Post col=alpha1_std`, and for
 LRG2 from {astra:value}`outputs/bao_alpha_values tracer=lrg2 recon=Pre col=alpha1_std`
 to {astra:value}`outputs/bao_alpha_values tracer=lrg2 recon=Post col=alpha1_std`. The
-full set of fits is collected in {astra:num}`outputs/bao_alpha_values`:
+full set of fits is collected in {astra:numref}`outputs/bao_alpha_values`:
 
 :::{astra} outputs/bao_alpha_values
 :::
@@ -192,7 +192,7 @@ of freedom; QSO is the least well-behaved, at $\chi^2 =$
 
 The dilation parameters convert directly into distances: each chain carries
 $D_M/r_d$, $D_H/r_d$, and $D_V/r_d$ as derived parameters, so the constraints
-in {astra:num}`outputs/bao_distance_table` inherit the full non-Gaussian shape of the
+in {astra:numref}`outputs/bao_distance_table` inherit the full non-Gaussian shape of the
 posteriors rather than a linearised propagation. For the combined LRG3+ELG1
 bin at $z_\mathrm{eff} =$
 {astra:value}`outputs/bao_distance_table tracer=lrg3_elg1 col=z_eff` we measure
@@ -213,7 +213,7 @@ $z_\mathrm{eff} =$ {astra:value}`outputs/bao_distance_table tracer=bgs col=z_eff
 :::
 
 Placed on a BAO Hubble diagram against 6dFGS, WiggleZ, SDSS DR16, and DES Y6
-({astra:num}`outputs/hubble_diagram_plot`), the DESI DR1 distances trace the Planck 2018
+({astra:numref}`outputs/hubble_diagram_plot`), the DESI DR1 distances trace the Planck 2018
 $\Lambda$CDM prediction across the full redshift range, with the standard-ruler
 anchor set by
 {astra}`the Planck 2018 sound horizon <prior_insights/planck2018_rdrag_precision>`.
