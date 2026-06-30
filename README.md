@@ -35,86 +35,97 @@ plugin (the same neutral markers `astra-theme` renders richly).
 
 ## Authoring grammar
 
-Block "import" directives (one component, by id):
+Every reference is a **path** that mirrors `astra.yaml` (`<collection>/<id>[/…]`,
+collections = `inputs outputs decisions findings prior_insights analyses
+universes`). One name — `astra` — is both a role (inline) and a directive (block).
+
+Block embeds (`:::{astra} <path>`):
 
 ```markdown
-:::{astra:decision} covariance_source
+:::{astra} decisions/covariance_source
 :::
-:::{astra:output} bao_fit_plot
+:::{astra} outputs/bao_fit_plot
 :::
-:::{astra:finding} bao_detected_post_recon
+:::{astra} findings/bao_detected_post_recon
 :::
-:::{astra:prior-insight} spline_broadband_fiducial
+:::{astra} prior_insights/spline_broadband_fiducial
 :::
-:::{astra:inputs}
+:::{astra} inputs
 :::                                   # full inputs registry table (root scope)
-:::{astra:outputs} clustering
-:::                                   # outputs table, clustering sub-analysis
-:::{astra:subanalysis} reconstruction
+:::{astra} clustering/outputs
+:::                                   # outputs registry, clustering sub-analysis
+:::{astra} reconstruction
 :::                                   # nav card to the sub-analysis page
 ```
 
-Inline "cite" roles — each renders inline as a **label** (neutral text; a rich
-theme like `astra-theme` adds the kind glyph and a hover **preview card** built
-from the resolved store: claim / rationale / selected option / exact quote +
-citation — focused, not a whole-table dump).
+Inline references (the `{astra}` role) — each renders inline as a **label**
+(neutral text; a rich theme like `astra-theme` adds the kind glyph and a hover
+**preview card** built from the resolved store).
 
 ```markdown
-{astra:decision}`covariance_source`           ◇ Decision  — selected option + rationale
-{astra:output}`hubble_diagram_plot`           ▦ Output    — type + description
-{astra:finding}`subpercent_alpha_iso_precision`  ● Finding — claim + scope
-{astra:prior-insight}`recon_reduces_bao_damping`  ◈ Prior insight — claim + quote + citation
-{astra:analysis}`reconstruction`              ◐ Sub-analysis — summary + counts
+{astra}`decisions/covariance_source`              ◇ Decision
+{astra}`outputs/hubble_diagram_plot`              ▦ Output
+{astra}`findings/subpercent_alpha_iso_precision`  ● Finding
+{astra}`prior_insights/recon_reduces_bao_damping` ◈ Prior insight
+{astra}`reconstruction`                           ◐ Sub-analysis (bare path)
 ```
 
 **Neutral by design.** The plugin emits *only* a semantic span + a join key — no
-glyphs, colours, card markup, or inline styles are baked into the AST. The theme
-builds the card from the resolved store, keyed by `data.astra`:
+glyphs, colours, or card markup are baked into the AST. The theme builds the card
+from the resolved store, keyed by `data.astra`:
 
 ```
 span.astra-ref.astra-ref--<kind>[ .astra-ref--<subtype>]   children: [ text(label) ]
   data.astra: { kind, id, path }
 ```
 
-**Optional display text** — append `|text` to set the inline label (the card
-still shows the element's own label/claim); the id fallback is humanised:
+**Display text** — MyST's `text <path>` override (the card still shows the
+element's own label/claim):
 
 ```markdown
-{astra:prior-insight}`precision_loss_factor_three|few-fold precision loss`
+{astra}`few-fold precision loss <prior_insights/precision_loss_factor_three>`
+```
+
+**Numbered cross-references** — `{astra:num}` (like `{numref}`; supports `%s`):
+
+```markdown
+{astra:num}`outputs/bao_fit_plot`            → Figure 1
+{astra:num}`see Fig. %s <outputs/bao_fit_plot>`
 ```
 
 Inline **value interpolation** — never hard-type a measured number; pull it
 live from a result product:
 
 ```markdown
-{astra:value}`bao_distance_table tracer=lrg3_elg1 col=DV_over_rd pm`   → 19.88 ± 0.17
-{astra:value}`bao_alpha_values tracer=lrg3_elg1 recon=Post col=alpha1_mean err=alpha1_std`
-{astra:value}`bao_alpha_values tracer=elg1 recon=Pre col=alpha1_std`   → 0.0696
+{astra:value}`outputs/bao_distance_table col=DV_over_rd tracer=lrg3_elg1 ±`   → 19.88 ± 0.17
+{astra:value}`outputs/bao_alpha_values col=alpha1_mean tracer=lrg3_elg1 recon=Post err=alpha1_std`
+{astra:value}`outputs/bao_alpha_values col=alpha1_std tracer=elg1 recon=Pre`  → 0.0696
+{astra:value}`decisions/smoothing_radius`                                     → the selected option
 ```
 
-Grammar: `<output-path> col=<column> [<key>=<val> …] [pm] [err=<col>] [sig=N]`.
-It reads the materialised CSV/JSON, filters rows by the `key=val` pairs, and
-renders the cell (with `± std` via `pm`/`err=`). `index.md` uses this for every
-number in the prose, so nothing is hand-typed.
-
-Each interpolated number renders as a glyph token (▦/▤ by source type) with a
-focused hover card naming its **source product, column, and row filters** — so
-the reader sees at a glance that a number is sourced data and exactly where it
-comes from, without a whole-table overlay.
+Grammar: `<path> [col=<column>] [<key>=<val> …] [±|pm] [err=<col>] [sig=N]`. It
+reads the materialised CSV/JSON, filters rows by the `key=val` pairs, and renders
+the cell (with `± std` via `±`/`err=`). `index.md` uses this for every number in
+the prose, so nothing is hand-typed.
 
 Extras:
 
-- `:::{astra:output}` **figures** carry the `output-<id>` anchor; **tables**
-  render as a clean numbered `container[table]` (not a collapsible). Both get a
-  collapsed **ASTRA provenance** disclosure (type, upstream products, decisions,
-  recipe command) — a traceable, first-class representation of the product.
-- `:::{astra:finding} <id>` accepts `:compact:` to render claim + notes + scope
-  only (no evidence figures) — used for the register's hover targets.
-- Reference a figure/table by number with a plain link: `[](#output-bao_fit_plot)`.
+- `:::{astra} outputs/<id>` **figures** carry the `output-<id>` anchor; **tables**
+  render as a clean numbered `container[table]`. Findings accept `:compact:`
+  (claim + notes + scope, no evidence), and outputs accept `:caption:`.
+- A path that stops at a collection (`outputs`, `clustering/inputs`) renders the
+  whole **registry**; children are addressable too (`decisions/<id>/options/<o>`,
+  `findings/<id>/evidence/<e>`).
 
-**Scoping.** A path is `<id>` (root analysis) or `<sub>.<id>` (sub-analysis),
-e.g. `reconstruction.algorithm`, `clustering.xi_multipoles_plot`. Sub-analysis
-pages (`reconstruction.md`, `clustering.md`) use the scoped prefix.
+**Scoping.** Role/directive paths resolve from the **root analysis**; a
+sub-analysis is a path segment (`reconstruction/decisions/algorithm`,
+`clustering/outputs/xi_multipoles_plot`), so sub-analysis pages
+(`reconstruction.md`, `clustering.md`) write the scoped path. The `#astra:<path>`
+link scheme (e.g. `[](#astra:outputs/bao_fit_plot)`) resolves relative to the
+current page.
+
+> **Plugin version.** These conventions need a MySTRA build that postdates the
+> unified-path-grammar redesign; the `v0.0.2` pin in `myst.yml` predates them.
 
 The plugin reads `astra.yaml` once (cached) and renders each component via the
 per-component helpers in `../src/transform/`. Source: `../src/index.ts` (the

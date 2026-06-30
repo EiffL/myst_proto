@@ -3,7 +3,7 @@ title: Clustering
 subtitle: Two-point correlation function ξ(s, μ) for DESI DR1 tracers
 ---
 
-> Sub-analysis page. Components are scoped with the `clustering.` path prefix.
+> Sub-analysis page. Components are addressed with the `clustering/` path prefix.
 
 ## Overview
 
@@ -22,18 +22,18 @@ rather than a set of binning knobs.
 The one free choice is whether to apply imaging-systematics weights. The same
 RascalC covariance null-tests this toggle at 0.27 σ, so it is left unlocked:
 
-:::{astra:decision} clustering.imaging_weights
+:::{astra} clustering/decisions/imaging_weights
 :::
 
 ## Outputs
 
 The headline diagnostic is the stacked ξ multipoles figure across tracers:
 
-:::{astra:output} clustering.xi_multipoles_plot
+:::{astra} clustering/outputs/xi_multipoles_plot
 :::
 
 The full per-tracer registry — one `xi_pre_recon_<tracer>` and one
 `xi_post_recon_<tracer>` per tracer — is:
 
-:::{astra:outputs} clustering
+:::{astra} clustering/outputs
 :::

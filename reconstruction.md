@@ -3,8 +3,8 @@ title: Reconstruction
 subtitle: Density-field reconstruction for DESI DR1 parent samples
 ---
 
-> Sub-analysis page. The `astra:*` components below are scoped into the
-> `reconstruction` sub-analysis with the `reconstruction.` path prefix.
+> Sub-analysis page. Components below are addressed with the `reconstruction/`
+> path prefix (the `analyses/` segment is implied).
 
 ## Overview
 
@@ -20,13 +20,13 @@ emits parent-level shifted catalogs; per-z-bin slicing is deferred to the
 The reconstruction algorithm is IterativeFFT (fiducial), with MultiGrid exposed
 as a sensitivity alternative:
 
-:::{astra:decision} reconstruction.algorithm
+:::{astra} reconstruction/decisions/algorithm
 :::
 
 The displacement convention is RecSym — both data and randoms are shifted, which
 is what keeps the post-reconstruction ξ estimator unbiased:
 
-:::{astra:decision} reconstruction.convention
+:::{astra} reconstruction/decisions/convention
 :::
 
 The Gaussian smoothing scale is not decided here: it is inherited from the root
@@ -38,5 +38,5 @@ the Σ_sm in the downstream BAO damping template stay identical by construction.
 Reconstruction emits a shifted galaxy + random catalog per parent sample,
 alongside diagnostic mean-displacement metrics:
 
-:::{astra:outputs} reconstruction
+:::{astra} reconstruction/outputs
 :::
