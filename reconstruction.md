@@ -20,13 +20,13 @@ emits parent-level shifted catalogs; per-z-bin slicing is deferred to the
 The reconstruction algorithm is IterativeFFT (fiducial), with MultiGrid exposed
 as a sensitivity alternative:
 
-:::{astra} reconstruction/decisions/algorithm
+:::{astra} reconstruction.decisions.algorithm
 :::
 
 The displacement convention is RecSym — both data and randoms are shifted, which
 is what keeps the post-reconstruction ξ estimator unbiased:
 
-:::{astra} reconstruction/decisions/convention
+:::{astra} reconstruction.decisions.convention
 :::
 
 The Gaussian smoothing scale is not decided here: it is inherited from the root
@@ -38,5 +38,5 @@ the Σ_sm in the downstream BAO damping template stay identical by construction.
 Reconstruction emits a shifted galaxy + random catalog per parent sample,
 alongside diagnostic mean-displacement metrics:
 
-:::{astra} reconstruction/outputs
+:::{astra} reconstruction.outputs
 :::

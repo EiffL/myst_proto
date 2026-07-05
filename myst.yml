@@ -8,13 +8,13 @@ project:
     - bao
     - desi
   plugins:
-    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.2/mystra.mjs
+    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.6/mystra.mjs
   toc:
     - file: index.md
     - file: reconstruction.md
     - file: clustering.md
 site:
-  template: https://github.com/Eiffl/astra-theme.git
+  template: /home/francois/repo/astra-theme
   title: DESI DR1 BAO Analysis
   options:
     # Lightcone Research brand logos; the dark variant swaps the Blue Ink

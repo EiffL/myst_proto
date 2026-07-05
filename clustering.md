@@ -22,18 +22,18 @@ rather than a set of binning knobs.
 The one free choice is whether to apply imaging-systematics weights. The same
 RascalC covariance null-tests this toggle at 0.27 σ, so it is left unlocked:
 
-:::{astra} clustering/decisions/imaging_weights
+:::{astra} clustering.decisions.imaging_weights
 :::
 
 ## Outputs
 
 The headline diagnostic is the stacked ξ multipoles figure across tracers:
 
-:::{astra} clustering/outputs/xi_multipoles_plot
+:::{astra} clustering.outputs.xi_multipoles_plot
 :::
 
 The full per-tracer registry — one `xi_pre_recon_<tracer>` and one
 `xi_post_recon_<tracer>` per tracer — is:
 
-:::{astra} clustering/outputs
+:::{astra} clustering.outputs
 :::
