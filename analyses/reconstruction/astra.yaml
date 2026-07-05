@@ -50,11 +50,11 @@ narrative:
 inputs:
   - id: desi_dr1_lss_catalogs
     type: data
-    from: desi_dr1_lss_catalogs        # parent input (raw data + randoms, all tracers)
+    from: ../desi_dr1_lss_catalogs        # parent input (raw data + randoms, all tracers)
 
   - id: desi_fiducial_cosmology
     type: data
-    from: desi_fiducial_cosmology      # parent input (z -> r table)
+    from: ../desi_fiducial_cosmology      # parent input (z -> r table)
 
 outputs:
   # --- BGS parent (z = 0.1 - 0.4) ---------------------------------------------

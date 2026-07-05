@@ -8,7 +8,7 @@ project:
     - bao
     - desi
   plugins:
-    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.2/mystra.mjs
+    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.7/mystra.mjs
   toc:
     - file: index.md
     - file: reconstruction.md

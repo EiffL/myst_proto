@@ -47,49 +47,49 @@ narrative:
 inputs:
   - id: desi_dr1_lss_catalogs
     type: data
-    from: desi_dr1_lss_catalogs          # parent: raw catalogs (pre-recon xi)
+    from: ../desi_dr1_lss_catalogs          # parent: raw catalogs (pre-recon xi)
 
   - id: desi_fiducial_cosmology
     type: data
-    from: desi_fiducial_cosmology        # parent: z -> r(z) table
+    from: ../desi_fiducial_cosmology        # parent: z -> r(z) table
 
   - id: post_recon_catalog_bgs_full
     type: data
-    from: reconstruction.post_recon_catalog_bgs_full   # sibling: BGS parent post-recon
+    from: ../reconstruction.post_recon_catalog_bgs_full   # sibling: BGS parent post-recon
   - id: post_recon_catalog_lrg_full
     type: data
-    from: reconstruction.post_recon_catalog_lrg_full   # sibling: LRG parent post-recon
+    from: ../reconstruction.post_recon_catalog_lrg_full   # sibling: LRG parent post-recon
   - id: post_recon_catalog_elg_full
     type: data
-    from: reconstruction.post_recon_catalog_elg_full   # sibling: ELG parent post-recon
+    from: ../reconstruction.post_recon_catalog_elg_full   # sibling: ELG parent post-recon
   - id: post_recon_catalog_qso_full
     type: data
-    from: reconstruction.post_recon_catalog_qso_full   # sibling: QSO parent post-recon
+    from: ../reconstruction.post_recon_catalog_qso_full   # sibling: QSO parent post-recon
 
   - id: desi_rascalc_cov_bgs
     type: data
-    from: desi_rascalc_cov_bgs           # parent: cov (BGS error bands)
+    from: ../desi_rascalc_cov_bgs           # parent: cov (BGS error bands)
   - id: desi_rascalc_cov_lrg1
     type: data
-    from: desi_rascalc_cov_lrg1          # parent: cov (LRG1 error bands)
+    from: ../desi_rascalc_cov_lrg1          # parent: cov (LRG1 error bands)
   - id: desi_rascalc_cov_lrg2
     type: data
-    from: desi_rascalc_cov_lrg2          # parent: cov (LRG2 error bands)
+    from: ../desi_rascalc_cov_lrg2          # parent: cov (LRG2 error bands)
   - id: desi_rascalc_cov_lrg3
     type: data
-    from: desi_rascalc_cov_lrg3          # parent: cov (LRG3 error bands)
+    from: ../desi_rascalc_cov_lrg3          # parent: cov (LRG3 error bands)
   - id: desi_rascalc_cov_elg1
     type: data
-    from: desi_rascalc_cov_elg1          # parent: cov (ELG1 error bands)
+    from: ../desi_rascalc_cov_elg1          # parent: cov (ELG1 error bands)
   - id: desi_rascalc_cov_elg2
     type: data
-    from: desi_rascalc_cov_elg2          # parent: cov (ELG2 error bands)
+    from: ../desi_rascalc_cov_elg2          # parent: cov (ELG2 error bands)
   - id: desi_rascalc_cov_lrg3_elg1
     type: data
-    from: desi_rascalc_cov_lrg3_elg1     # parent: cov (LRG3+ELG1 error bands)
+    from: ../desi_rascalc_cov_lrg3_elg1     # parent: cov (LRG3+ELG1 error bands)
   - id: desi_rascalc_cov_qso
     type: data
-    from: desi_rascalc_cov_qso           # parent: cov (QSO error bands)
+    from: ../desi_rascalc_cov_qso           # parent: cov (QSO error bands)
 
 outputs:
   # --- BGS (1D-fit tracer, z=0.1-0.4) -----------------------------------------
