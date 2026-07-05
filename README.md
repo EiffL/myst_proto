@@ -12,7 +12,7 @@ myst start                             # → http://localhost:3000  (or pass --p
 
 How it's wired (see `myst.yml`):
 - `project.plugins:` — the bundled MySTRA release
-  (`https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.6/mystra.mjs`).
+  (`https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.7/mystra.mjs`).
   It emits the neutral `astra-*` markers + the per-page resolved store.
 - `site.template: https://github.com/Eiffl/astra-theme.git` — the theme (a
   standalone fork of @myst-theme/book with the ASTRA renderers compiled in).
