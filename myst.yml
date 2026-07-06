@@ -1,12 +1,70 @@
 version: 1
 project:
   title: DESI DR1 BAO Analysis
+  subtitle: Reproducing the configuration-space baryon-acoustic-oscillation measurement
+  description: >-
+    An ASTRA reproduction of the DESI DR1 configuration-space BAO measurement
+    across all eight tracer-redshift bins, from density-field reconstruction
+    to cosmological distances.
+  subject: Reproduction
+  venue:
+    title: Lightcone Research
+  open_access: true
+  license:
+    content: CC-BY-4.0
+    code: MIT
+  github: https://github.com/EiffL/myst_proto
+  date: 2026/07/06
+  thumbnail: results/baseline/bao_fit_plot/bao_fit_plot.png
   authors:
-    - name: DESI Collaboration
+    - name: Liam Parker
+      orcid: 0009-0007-4952-1674
+      corresponding: true
+      email: lhparker@berkeley.edu
+      github: lhparker1
+      affiliation: berkeley
+      roles:
+        - Software
+        - Formal analysis
+        - Writing – original draft
+    - name: Francois Lanusse
+      orcid: 0000-0001-7956-0542
+      email: francois.lanusse@cnrs.fr
+      github: EiffL
+      affiliation: aim
+      roles:
+        - Conceptualization
+        - Methodology
+        - Supervision
+  affiliations:
+    - id: berkeley
+      institution: University of California, Berkeley
+      ror: https://ror.org/01an7q238
+      department: Department of Physics
+      city: Berkeley
+      region: California
+      country: USA
+    - id: aim
+      institution: AIM, CEA, CNRS, Université Paris-Saclay
+      ror: https://ror.org/0015h8611
+      city: Gif-sur-Yvette
+      country: France
   keywords:
     - cosmology
     - bao
     - desi
+  funding: L.P. is supported by an NSF Graduate Research Fellowship.
+  abbreviations:
+    BAO: baryon acoustic oscillations
+    DESI: Dark Energy Spectroscopic Instrument
+    DR1: Data Release 1
+    BGS: Bright Galaxy Survey
+    LRG: luminous red galaxy
+    ELG: emission-line galaxy
+    QSO: quasar
+    CMB: cosmic microwave background
+    FoG: Fingers of God
+    HOD: halo occupation distribution
   plugins:
     - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.7/mystra.mjs
   toc:
@@ -14,7 +72,7 @@ project:
     - file: reconstruction.md
     - file: clustering.md
 site:
-  template: https://github.com/Eiffl/astra-theme.git
+  template: https://github.com/EiffL/astra-article-theme.git
   title: DESI DR1 BAO Analysis
   options:
     # Lightcone Research brand logos; the dark variant swaps the Blue Ink

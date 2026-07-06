@@ -1,8 +1,6 @@
 ---
 title: Configuration-Space BAO Distances from DESI DR1
 subtitle: A reproduction across eight tracer–redshift bins, pre- and post-reconstruction
-authors:
-  - name: DESI Collaboration
 exports:
   - format: pdf
 ---
