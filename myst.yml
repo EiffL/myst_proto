@@ -14,8 +14,8 @@ project:
     content: CC-BY-4.0
     code: MIT
   github: https://github.com/EiffL/myst_proto
-  date: 2026/07/06
-  thumbnail: results/baseline/bao_fit_plot/bao_fit_plot.png
+  date: 2026-07-06
+  thumbnail: results/baseline/bao_fit_plot.png
   authors:
     - name: Liam Parker
       orcid: 0009-0007-4952-1674
@@ -66,7 +66,7 @@ project:
     FoG: Fingers of God
     HOD: halo occupation distribution
   plugins:
-    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.7/mystra.mjs
+    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.8/mystra.mjs
   toc:
     - file: index.md
     - file: reconstruction.md

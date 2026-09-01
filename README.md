@@ -10,13 +10,16 @@ authored with the [MySTRA](https://github.com/LightconeResearch/MySTRA) plugin
 myst start                             # → http://localhost:3000  (or pass --port 3111)
 ```
 
+Materialized outputs use ASTRA's deterministic artifact layout:
+`results/<universe>/<output_id>.<format>`. Path-backed analyses use the same
+layout beside their own `astra.yaml`; for example, clustering artifacts live
+under `analyses/clustering/results/baseline/`.
+
 How it's wired (see `myst.yml`):
-- `project.plugins:` — the bundled MySTRA release
-  (`https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.7/mystra.mjs`).
+- `project.plugins:` — the published MySTRA `v0.0.8` release bundle.
   It emits the neutral `astra-*` markers + the per-page resolved store.
-- `site.template: https://github.com/Eiffl/astra-theme.git` — the theme (a
-  standalone fork of @myst-theme/book with the ASTRA renderers compiled in).
-  Point it at a local checkout instead while developing the theme.
+- `site.template: https://github.com/EiffL/astra-article-theme.git` — the
+  published ASTRA article theme (`v0.0.9`).
 
 The full rich experience renders here: inline hover preview cards, the interactive decision
 panel, output figures with provenance drawers, finding/insight cards, registry tables, and live
@@ -83,12 +86,16 @@ element's own label/claim):
 {astra}`few-fold precision loss <prior_insights.precision_loss_factor_three>`
 ```
 
-**Numbered cross-references** — `{astra:ref}` (like `{ref}`; supports `%s`;
-`{astra:numref}` is accepted as an alias):
+**Numbered cross-references** — label a placed ASTRA block and use MyST's
+standard `{ref}` role:
 
 ```markdown
-{astra:ref}`outputs.bao_fit_plot`            → Figure 1
-{astra:ref}`see Fig. %s <outputs.bao_fit_plot>`
+:::{astra} outputs.bao_fit_plot
+:label: fig-bao-fit
+:::
+
+{ref}`fig-bao-fit`                         → Figure 1
+{ref}`see Fig. %s <fig-bao-fit>`
 ```
 
 Inline **value interpolation** — never hard-type a measured number; pull it

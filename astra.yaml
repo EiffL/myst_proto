@@ -1,179 +1,16 @@
 # ASTRA Analysis Specification
 # Documentation: https://github.com/LightconeResearch/ASTRA
 
-version: "1.0"
+version: "0.0.14"
 name: DESI DR1 BAO Analysis
-authors:
-  - DESI Collaboration
+description: >-
+  Reproduction of the DESI DR1 configuration-space BAO measurement across
+  eight tracer-redshift bins, from density-field reconstruction and clustering
+  through BAO fitting to cosmological distance constraints.
 tags:
   - cosmology
   - bao
   - desi
-narrative:
-  summary: |
-    Reproduction of the DESI DR1 configuration-space BAO measurement
-    across all eight tracer-redshift bins: BGS (0.1 < z < 0.4),
-    LRG1 / LRG2 / LRG3 (0.4 < z < 1.1), ELG1 / ELG2
-    (0.8 < z < 1.6), the combined LRG3+ELG1 bin, and
-    QSO (0.8 < z < 2.1). Damped-BAO fits to ξ(s) pre- and
-    post-reconstruction in the α_iso/α_AP basis (α_iso-only for the
-    1D-fit tracers BGS, ELG1, QSO); the α_⊥/α_∥ basis is derived from
-    the same iso_ap chains via the qper/qpar derived parameters
-    rather than separately sampled, since basis-Jacobian effects are
-    negligible at our precision. Fourier-space P(k) is out of scope.
-
-    The baseline universe delivers sub-percent α_iso precision per
-    2D LRG bin post-recon, with σ(α_iso) and σ(α_AP) consistent
-    across the 16 chains, and produces propagated D_M/r_d, D_H/r_d,
-    D_V/r_d distances at ~1 % per tracer. The same chains feed the
-    Hubble diagram against 6dFGS / WiggleZ / SDSS DR16 / DES Y6.
-
-    ![Hubble diagram against 6dFGS / WiggleZ / SDSS DR16 / DES Y6](#outputs.hubble_diagram_plot)
-  findings: |
-    [The ξ(s) BAO feature sharpens from pre to post-reconstruction
-    across tracers](#findings.bao_peak_sharpens_post_recon), and
-    [a Δχ²(α_iso) minimum against a no-BAO reference is detected in
-    every post-recon tracer](#findings.bao_detected_post_recon). The
-    isolated BAO feature per tracer and the Δχ²(α_iso) detection
-    profiles are the headline visual signatures of the measurement.
-
-    ![Isolated BAO feature per tracer](#outputs.bao_fit_plot)
-
-    ![Δχ²(α_iso) BAO-vs-no-BAO detection profiles](#outputs.bao_detection_plot)
-
-    Statistically, [reconstruction contracts σ(α_iso) by ~1.4–3×
-    depending on tracer](#findings.recon_reduces_alpha_iso_sigma) —
-    the LPT-predicted [reduction of non-linear BAO damping under
-    reconstruction](#prior_insights.recon_reduces_bao_damping) — and
-    yields [sub-percent α_iso per 2D LRG bin
-    post-recon](#findings.subpercent_alpha_iso_precision). The
-    aggregated α values
-    ([α_iso / α_AP](#outputs.bao_alpha_values) and
-    [α_⊥ / α_∥](#outputs.bao_alpha_perp_par)) and the post-recon
-    distance constraints D_M/r_d, D_H/r_d, D_V/r_d, D_M/D_H with the
-    combined modelling + HOD + fiducial-cosmology systematic budget
-    folded in are the primary numerical deliverables.
-
-    ![Final BAO distance constraints](#outputs.bao_distance_table)
-
-    [χ²/dof lands near dof in every fit](#findings.bao_fit_chi2_near_dof).
-    The combined modelling + HOD + fiducial-cosmology systematic
-    budget is folded in at the aggregation step without a refit;
-    [systematic_error_treatment](#decisions.systematic_error_treatment)
-    toggles between stat-only and with-budget views as a table
-    rebuild rather than a refit.
-  inputs: |
-    Three input classes drive the pipeline. Raw
-    [DESI DR1 LSS clustering catalogs](#inputs.desi_dr1_lss_catalogs)
-    (galaxies + 18 random realisations per cap) feed pre-recon ξ
-    and reconstruction. The
-    [tabulated DESI fiducial cosmology](#inputs.desi_fiducial_cosmology)
-    supplies z → r(z) — the table must match DESI's TabulatedDESI
-    convention exactly or the window and covariance stop being
-    self-consistent. The **RascalC analytic covariances** — one pre-
-    and one post-recon file per tracer (including LRG3+ELG1), from
-    the DESI unblinded v1.2 release — are ingested as-is rather than
-    recomputed, fixing ξ s-binning at 4 Mpc/h over 0–200 Mpc/h.
-
-    Choosing the published RascalC matrices via
-    [covariance_source](#decisions.covariance_source) = `desi_vac`
-    is the load-bearing input decision: the `self_computed`
-    alternative is declared and explicitly excluded (~20 node-days
-    of compute + private `desi_y1_files` dep; see `excluded_reason`),
-    so the alternative is documented rather than silently absent.
-    Because RascalC is calibrated against a fixed fiducial
-    reconstruction + clustering setup, this choice constrains the
-    downstream recon pipeline to its fiducial options (see Methods).
-  methods: |
-    [Reconstruction](#analyses.reconstruction) runs first: the linear
-    displacement field is estimated from the Gaussian-smoothed raw
-    density and applied symmetrically to galaxies and randoms
-    (RecSym), sharpening the BAO peak. One pass per parent sample
-    (LRG 0.4–1.1, ELG 0.8–1.6) emits shifted catalogs. The
-    load-bearing knob enters here —
-    [smoothing_radius](#decisions.smoothing_radius) sets the Σ_sm
-    applied before solving for the displacement, and because the
-    same Σ_sm enters the BAO model's damping correction downstream,
-    reconstruction inherits it from the root via
-    `from: ../smoothing_radius` to keep the two stages consistent.
-
-    [Clustering](#analyses.clustering) measures the Landy–Szalay
-    ξ(s, μ) on raw and shifted catalogs per tracer z-slice. Because
-    the ξ(s) covariance is pinned to the published RascalC matrices
-    rather than recomputed (see Data), non-fiducial
-    [smoothing_radius](#decisions.smoothing_radius) (sm10 / sm20)
-    and [smoothing_radius_qso](#decisions.smoothing_radius_qso) (sm20)
-    declare `incompatible_with: [covariance_source.desi_vac]`, so
-    the baseline universe validates only when those stay at
-    fiducial. The non-fiducial reconstruction options
-    (MultiGrid, RecIso, estimated-from-data bias, n1 / n5 iterations)
-    are similarly only valid against a self-computed covariance, but
-    that lock is documented in `covariance_source`'s rationale rather
-    than enforced via cross-sub `incompatible_with`. Clustering's
-    s-binning, μ-binning, and estimator are locked to the RascalC
-    grid for the same reason, which is why
-    [clustering](#analyses.clustering) carries no binning decisions —
-    only an `imaging_weights` on/off toggle, which the same cov
-    null-tests at 0.27 σ and is therefore left unlocked.
-
-    The root stage fits the fiducial damped-BAO template with
-    desilike + emcee, producing one MCMC chain per (tracer, recon
-    state). The 5 2D tracers (LRG1/LRG2/LRG3, LRG3+ELG1, ELG2) get
-    two `iso_ap` chains each (pre + post); the 3 1D-only tracers
-    (BGS, ELG1, QSO) get two `iso` chains each — 16 chains in total.
-    The `iso_ap` chains carry qper / qpar / DM_over_rd / DH_over_rd /
-    DV_over_rd / DH_over_DM as derived parameters, so a single
-    sampling pass per (tracer, recon) feeds the α-table, the
-    perp/par-basis table, the distance constraints, and the BAO,
-    detection-profile, distance-corner, and Hubble-diagram figures
-    with no separate `perp_par`-basis sampling needed.
-
-    ![4×4 distance posterior corner with α-residual top inset](#outputs.distance_residuals_plot)
-
-    Three template-shape knobs are exposed as decisions so
-    alternatives can be layered on without spec drift, each pinned
-    to its fiducial:
-    [FoG damping on the smooth component only](#decisions.fog_placement),
-    [α dilation on wiggles only](#decisions.dilate_model_component),
-    and [peak-average dewiggling](#decisions.dewiggling_method). Only
-    the fiducial branch of each is wired — the alternatives are
-    declared to document the modelling-systematic budget they
-    underlie. The main systematics dial at the fit stage is
-    [broadband](#decisions.broadband) (spline fiducial vs polynomial
-    legacy form), which [has been validated as giving consistent
-    α's with the residual absorbed into the modelling error
-    budget](#prior_insights.spline_broadband_fiducial). BAO damping
-    is set jointly by [damping_prior](#decisions.damping_prior) and
-    [damping_centers](#decisions.damping_centers), anchored to the
-    finding that [mis-centring by ≳ 2 h⁻¹ Mpc biases α at the
-    0.1–0.2 % level](#prior_insights.damping_prior_width_justification).
-    Fiducial-cosmology systematics are swept via
-    [template_cosmology](#decisions.template_cosmology) (five
-    AbacusSummit grids, `c000` = Planck 2018 default). The remaining
-    decisions ([fit_range](#decisions.fit_range),
-    [ells](#decisions.ells),
-    [fitting_method](#decisions.fitting_method)) exist for
-    sensitivity tests.
-  outputs: |
-    The deliverables fall into three groups. The MCMC chains are
-    the primitives: one per (tracer, recon state) — 16 in total —
-    in `iso_ap` form for the 5 2D tracers and `iso` form for the
-    3 1D tracers. The aggregated tables condense those chains into
-    [α_iso / α_AP](#outputs.bao_alpha_values),
-    [α_⊥ / α_∥](#outputs.bao_alpha_perp_par), and the post-recon
-    [distance constraints D_M/r_d, D_H/r_d, D_V/r_d, D_M/D_H](#outputs.bao_distance_table)
-    with the modelling + HOD + fiducial-cosmology systematic budget
-    folded in at the aggregation step (toggled by
-    [systematic_error_treatment](#decisions.systematic_error_treatment)
-    as a table rebuild rather than a refit). The figures are the
-    headline visuals: per-tracer
-    [isolated BAO feature](#outputs.bao_fit_plot) and
-    [Δχ²(α_iso) detection profile](#outputs.bao_detection_plot)
-    panels, the
-    [distance posterior corner](#outputs.distance_residuals_plot),
-    and the
-    [Hubble diagram against 6dFGS / WiggleZ / SDSS DR16 / DES Y6](#outputs.hubble_diagram_plot).
-
 # Containerization skipped on NERSC: mpi4py + podman-hpc is fiddly and the
 # project's .venv already isolates deps. Add `container:` back if you want to
 # reproduce off-cluster.
@@ -336,17 +173,49 @@ inputs:
 # -----------------------------------------------------------------------------
 outputs:
 
-  # Recipes reference sub-analysis outputs directly via dot-notation
-  # (e.g. `inputs: [clustering.xi_pre_recon_lrg1]`) -- no root-level aliases
-  # needed. Prism + astra resolve qualified sub-analysis outputs natively.
+  # Re-export clustering artifacts into this scope before using them as
+  # dependencies. Outputs flow upward explicitly through each analysis layer.
+  - id: xi_pre_recon_bgs
+    from: clustering.xi_pre_recon_bgs
+  - id: xi_post_recon_bgs
+    from: clustering.xi_post_recon_bgs
+  - id: xi_pre_recon_lrg1
+    from: clustering.xi_pre_recon_lrg1
+  - id: xi_post_recon_lrg1
+    from: clustering.xi_post_recon_lrg1
+  - id: xi_pre_recon_lrg2
+    from: clustering.xi_pre_recon_lrg2
+  - id: xi_post_recon_lrg2
+    from: clustering.xi_post_recon_lrg2
+  - id: xi_pre_recon_lrg3
+    from: clustering.xi_pre_recon_lrg3
+  - id: xi_post_recon_lrg3
+    from: clustering.xi_post_recon_lrg3
+  - id: xi_pre_recon_elg1
+    from: clustering.xi_pre_recon_elg1
+  - id: xi_post_recon_elg1
+    from: clustering.xi_post_recon_elg1
+  - id: xi_pre_recon_elg2
+    from: clustering.xi_pre_recon_elg2
+  - id: xi_post_recon_elg2
+    from: clustering.xi_post_recon_elg2
+  - id: xi_pre_recon_lrg3_elg1
+    from: clustering.xi_pre_recon_lrg3_elg1
+  - id: xi_post_recon_lrg3_elg1
+    from: clustering.xi_post_recon_lrg3_elg1
+  - id: xi_pre_recon_qso
+    from: clustering.xi_pre_recon_qso
+  - id: xi_post_recon_qso
+    from: clustering.xi_post_recon_qso
 
   # --- Chains: 4 fits (pre/post × iso_ap/perp_par) per 2D tracer ------------
   # BGS (1D-only: monopole-only fit, qAP fixed to 1; basis "iso")
   - id: bao_fit_pre_iso_bgs
     type: data
+    format: npy
     description: "BGS pre-recon chain, 1D monopole fit in alpha_iso (qAP fixed)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_bgs]
+    inputs: [xi_pre_recon_bgs]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer bgs --basis iso
@@ -363,9 +232,10 @@ outputs:
 
   - id: bao_fit_post_iso_bgs
     type: data
+    format: npy
     description: "BGS post-recon chain, 1D monopole fit in alpha_iso (qAP fixed)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_bgs]
+    inputs: [xi_post_recon_bgs]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer bgs --basis iso
@@ -383,9 +253,10 @@ outputs:
   # LRG1
   - id: bao_fit_pre_iso_ap_lrg1
     type: data
+    format: npy
     description: "LRG1 pre-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg1]
+    inputs: [xi_pre_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg1 --basis iso_ap
@@ -402,9 +273,10 @@ outputs:
 
   - id: bao_fit_post_iso_ap_lrg1
     type: data
+    format: npy
     description: "LRG1 post-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg1]
+    inputs: [xi_post_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg1 --basis iso_ap
@@ -421,9 +293,10 @@ outputs:
 
   - id: bao_fit_pre_perp_par_lrg1
     type: data
+    format: npy
     description: "LRG1 pre-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg1]
+    inputs: [xi_pre_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg1 --basis perp_par
@@ -440,9 +313,10 @@ outputs:
 
   - id: bao_fit_post_perp_par_lrg1
     type: data
+    format: npy
     description: "LRG1 post-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg1]
+    inputs: [xi_post_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg1 --basis perp_par
@@ -460,9 +334,10 @@ outputs:
   # LRG2
   - id: bao_fit_pre_iso_ap_lrg2
     type: data
+    format: npy
     description: "LRG2 pre-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg2]
+    inputs: [xi_pre_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg2 --basis iso_ap
@@ -479,9 +354,10 @@ outputs:
 
   - id: bao_fit_post_iso_ap_lrg2
     type: data
+    format: npy
     description: "LRG2 post-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg2]
+    inputs: [xi_post_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg2 --basis iso_ap
@@ -498,9 +374,10 @@ outputs:
 
   - id: bao_fit_pre_perp_par_lrg2
     type: data
+    format: npy
     description: "LRG2 pre-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg2]
+    inputs: [xi_pre_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg2 --basis perp_par
@@ -517,9 +394,10 @@ outputs:
 
   - id: bao_fit_post_perp_par_lrg2
     type: data
+    format: npy
     description: "LRG2 post-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg2]
+    inputs: [xi_post_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg2 --basis perp_par
@@ -537,9 +415,10 @@ outputs:
   # LRG3
   - id: bao_fit_pre_iso_ap_lrg3
     type: data
+    format: npy
     description: "LRG3 pre-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg3]
+    inputs: [xi_pre_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg3 --basis iso_ap
@@ -556,9 +435,10 @@ outputs:
 
   - id: bao_fit_post_iso_ap_lrg3
     type: data
+    format: npy
     description: "LRG3 post-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg3]
+    inputs: [xi_post_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg3 --basis iso_ap
@@ -575,9 +455,10 @@ outputs:
 
   - id: bao_fit_pre_perp_par_lrg3
     type: data
+    format: npy
     description: "LRG3 pre-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg3]
+    inputs: [xi_pre_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg3 --basis perp_par
@@ -594,9 +475,10 @@ outputs:
 
   - id: bao_fit_post_perp_par_lrg3
     type: data
+    format: npy
     description: "LRG3 post-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg3]
+    inputs: [xi_post_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg3 --basis perp_par
@@ -614,9 +496,10 @@ outputs:
   # ELG1 (1D-only: monopole-only fit, qAP fixed to 1; basis "iso")
   - id: bao_fit_pre_iso_elg1
     type: data
+    format: npy
     description: "ELG1 pre-recon chain, 1D monopole fit in alpha_iso (qAP fixed)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_elg1]
+    inputs: [xi_pre_recon_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer elg1 --basis iso
@@ -633,9 +516,10 @@ outputs:
 
   - id: bao_fit_post_iso_elg1
     type: data
+    format: npy
     description: "ELG1 post-recon chain, 1D monopole fit in alpha_iso (qAP fixed)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_elg1]
+    inputs: [xi_post_recon_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer elg1 --basis iso
@@ -653,9 +537,10 @@ outputs:
   # ELG2 (2D fit)
   - id: bao_fit_pre_iso_ap_elg2
     type: data
+    format: npy
     description: "ELG2 pre-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_elg2]
+    inputs: [xi_pre_recon_elg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer elg2 --basis iso_ap
@@ -672,9 +557,10 @@ outputs:
 
   - id: bao_fit_post_iso_ap_elg2
     type: data
+    format: npy
     description: "ELG2 post-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_elg2]
+    inputs: [xi_post_recon_elg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer elg2 --basis iso_ap
@@ -691,9 +577,10 @@ outputs:
 
   - id: bao_fit_pre_perp_par_elg2
     type: data
+    format: npy
     description: "ELG2 pre-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_elg2]
+    inputs: [xi_pre_recon_elg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer elg2 --basis perp_par
@@ -710,9 +597,10 @@ outputs:
 
   - id: bao_fit_post_perp_par_elg2
     type: data
+    format: npy
     description: "ELG2 post-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_elg2]
+    inputs: [xi_post_recon_elg2]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer elg2 --basis perp_par
@@ -730,9 +618,10 @@ outputs:
   # LRG3 + ELG1 combined (headline row)
   - id: bao_fit_pre_iso_ap_lrg3_elg1
     type: data
+    format: npy
     description: "LRG3+ELG1 combined pre-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg3_elg1]
+    inputs: [xi_pre_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg3_elg1 --basis iso_ap
@@ -749,9 +638,10 @@ outputs:
 
   - id: bao_fit_post_iso_ap_lrg3_elg1
     type: data
+    format: npy
     description: "LRG3+ELG1 combined post-recon chain in alpha_iso / alpha_AP basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg3_elg1]
+    inputs: [xi_post_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg3_elg1 --basis iso_ap
@@ -768,9 +658,10 @@ outputs:
 
   - id: bao_fit_pre_perp_par_lrg3_elg1
     type: data
+    format: npy
     description: "LRG3+ELG1 combined pre-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_lrg3_elg1]
+    inputs: [xi_pre_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer lrg3_elg1 --basis perp_par
@@ -787,9 +678,10 @@ outputs:
 
   - id: bao_fit_post_perp_par_lrg3_elg1
     type: data
+    format: npy
     description: "LRG3+ELG1 combined post-recon chain in alpha_perp / alpha_par basis."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_lrg3_elg1]
+    inputs: [xi_post_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer lrg3_elg1 --basis perp_par
@@ -807,9 +699,10 @@ outputs:
   # QSO (1D-only: monopole-only fit, qAP fixed to 1; basis "iso")
   - id: bao_fit_pre_iso_qso
     type: data
+    format: npy
     description: "QSO pre-recon chain, 1D monopole fit in alpha_iso (qAP fixed)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius_qso, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_pre_recon_qso]
+    inputs: [xi_pre_recon_qso]
     recipe:
       command: >-
         python -u scripts/fit_bao_pre.py --output {output} --tracer qso --basis iso
@@ -826,9 +719,10 @@ outputs:
 
   - id: bao_fit_post_iso_qso
     type: data
+    format: npy
     description: "QSO post-recon chain, 1D monopole fit in alpha_iso (qAP fixed; ~4.2σ detection)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius_qso, fog_placement, dewiggling_method, dilate_model_component, fitting_method]
-    inputs: [clustering.xi_post_recon_qso]
+    inputs: [xi_post_recon_qso]
     recipe:
       command: >-
         python -u scripts/fit_bao_post.py --output {output} --tracer qso --basis iso
@@ -846,6 +740,7 @@ outputs:
   # --- Tables: one row per (tracer, recon) ---
   - id: bao_alpha_values
     type: table
+    format: csv
     description: |
       BAO dilation parameters for all eight DESI DR1 tracer–redshift bins,
       before (`Pre`) and after (`Post`) reconstruction. Each row gives the
@@ -874,6 +769,7 @@ outputs:
 
   - id: bao_alpha_perp_par
     type: table
+    format: csv
     description: |
       alpha_perp / alpha_par / r_off per (tracer, recon).
       Derived from the iso_ap chains (qper / qpar are derived params there);
@@ -899,9 +795,10 @@ outputs:
   # and any single tracer can be recomputed in isolation.
   - id: bao_fit_isolated_bgs
     type: data
+    format: npz
     description: "BGS pre+post isolated-BAO-feature curves (1D-only tracer)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_bgs, bao_fit_post_iso_bgs, clustering.xi_pre_recon_bgs, clustering.xi_post_recon_bgs]
+    inputs: [bao_fit_pre_iso_bgs, bao_fit_post_iso_bgs, xi_pre_recon_bgs, xi_post_recon_bgs]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer bgs
@@ -917,9 +814,10 @@ outputs:
 
   - id: bao_fit_isolated_lrg1
     type: data
+    format: npz
     description: "LRG1 pre+post isolated-BAO-feature curves."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_ap_lrg1, bao_fit_post_iso_ap_lrg1, clustering.xi_pre_recon_lrg1, clustering.xi_post_recon_lrg1]
+    inputs: [bao_fit_pre_iso_ap_lrg1, bao_fit_post_iso_ap_lrg1, xi_pre_recon_lrg1, xi_post_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer lrg1
@@ -935,9 +833,10 @@ outputs:
 
   - id: bao_fit_isolated_lrg2
     type: data
+    format: npz
     description: "LRG2 pre+post isolated-BAO-feature curves."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_ap_lrg2, bao_fit_post_iso_ap_lrg2, clustering.xi_pre_recon_lrg2, clustering.xi_post_recon_lrg2]
+    inputs: [bao_fit_pre_iso_ap_lrg2, bao_fit_post_iso_ap_lrg2, xi_pre_recon_lrg2, xi_post_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer lrg2
@@ -953,9 +852,10 @@ outputs:
 
   - id: bao_fit_isolated_lrg3
     type: data
+    format: npz
     description: "LRG3 pre+post isolated-BAO-feature curves."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_ap_lrg3, bao_fit_post_iso_ap_lrg3, clustering.xi_pre_recon_lrg3, clustering.xi_post_recon_lrg3]
+    inputs: [bao_fit_pre_iso_ap_lrg3, bao_fit_post_iso_ap_lrg3, xi_pre_recon_lrg3, xi_post_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer lrg3
@@ -971,9 +871,10 @@ outputs:
 
   - id: bao_fit_isolated_elg1
     type: data
+    format: npz
     description: "ELG1 pre+post isolated-BAO-feature curves (1D-only tracer)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_elg1, bao_fit_post_iso_elg1, clustering.xi_pre_recon_elg1, clustering.xi_post_recon_elg1]
+    inputs: [bao_fit_pre_iso_elg1, bao_fit_post_iso_elg1, xi_pre_recon_elg1, xi_post_recon_elg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer elg1
@@ -989,9 +890,10 @@ outputs:
 
   - id: bao_fit_isolated_elg2
     type: data
+    format: npz
     description: "ELG2 pre+post isolated-BAO-feature curves."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_ap_elg2, bao_fit_post_iso_ap_elg2, clustering.xi_pre_recon_elg2, clustering.xi_post_recon_elg2]
+    inputs: [bao_fit_pre_iso_ap_elg2, bao_fit_post_iso_ap_elg2, xi_pre_recon_elg2, xi_post_recon_elg2]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer elg2
@@ -1007,9 +909,10 @@ outputs:
 
   - id: bao_fit_isolated_lrg3_elg1
     type: data
+    format: npz
     description: "LRG3+ELG1 combined pre+post isolated-BAO-feature curves."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_ap_lrg3_elg1, bao_fit_post_iso_ap_lrg3_elg1, clustering.xi_pre_recon_lrg3_elg1, clustering.xi_post_recon_lrg3_elg1]
+    inputs: [bao_fit_pre_iso_ap_lrg3_elg1, bao_fit_post_iso_ap_lrg3_elg1, xi_pre_recon_lrg3_elg1, xi_post_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer lrg3_elg1
@@ -1025,9 +928,10 @@ outputs:
 
   - id: bao_fit_isolated_qso
     type: data
+    format: npz
     description: "QSO pre+post isolated-BAO-feature curves (1D-only tracer)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius_qso, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [bao_fit_pre_iso_qso, bao_fit_post_iso_qso, clustering.xi_pre_recon_qso, clustering.xi_post_recon_qso]
+    inputs: [bao_fit_pre_iso_qso, bao_fit_post_iso_qso, xi_pre_recon_qso, xi_post_recon_qso]
     recipe:
       command: >-
         python -u scripts/compute_bao_fit.py --output {output} --tracer qso
@@ -1043,6 +947,7 @@ outputs:
 
   - id: bao_fit_plot
     type: figure
+    format: png
     description: |
       The isolated BAO feature in the DESI DR1 correlation functions.
       Each panel shows $s^2\,\Delta\xi_\ell(s)$ — the measured multipole
@@ -1067,9 +972,10 @@ outputs:
   # tracer can be rerun cheaply while iterating on the plot or the fit.
   - id: bao_detection_chi2_bgs
     type: data
+    format: npz
     description: "BGS post-recon BAO vs no-BAO chi2(alpha_iso) profile (~4σ detection)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_bgs]
+    inputs: [xi_post_recon_bgs]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer bgs
@@ -1085,9 +991,10 @@ outputs:
 
   - id: bao_detection_chi2_lrg1
     type: data
+    format: npz
     description: "LRG1 post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_lrg1]
+    inputs: [xi_post_recon_lrg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer lrg1
@@ -1103,9 +1010,10 @@ outputs:
 
   - id: bao_detection_chi2_lrg2
     type: data
+    format: npz
     description: "LRG2 post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_lrg2]
+    inputs: [xi_post_recon_lrg2]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer lrg2
@@ -1121,9 +1029,10 @@ outputs:
 
   - id: bao_detection_chi2_lrg3
     type: data
+    format: npz
     description: "LRG3 post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_lrg3]
+    inputs: [xi_post_recon_lrg3]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer lrg3
@@ -1139,9 +1048,10 @@ outputs:
 
   - id: bao_detection_chi2_elg1
     type: data
+    format: npz
     description: "ELG1 post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_elg1]
+    inputs: [xi_post_recon_elg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer elg1
@@ -1157,9 +1067,10 @@ outputs:
 
   - id: bao_detection_chi2_elg2
     type: data
+    format: npz
     description: "ELG2 post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_elg2]
+    inputs: [xi_post_recon_elg2]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer elg2
@@ -1175,9 +1086,10 @@ outputs:
 
   - id: bao_detection_chi2_lrg3_elg1
     type: data
+    format: npz
     description: "LRG3+ELG1 combined post-recon BAO vs no-BAO chi2(alpha_iso) profile."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_lrg3_elg1]
+    inputs: [xi_post_recon_lrg3_elg1]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer lrg3_elg1
@@ -1193,9 +1105,10 @@ outputs:
 
   - id: bao_detection_chi2_qso
     type: data
+    format: npz
     description: "QSO post-recon BAO vs no-BAO chi2(alpha_iso) profile (~4.2σ detection)."
     decisions: [broadband, damping_prior, fit_range, ells, damping_centers, template_cosmology, smoothing_radius_qso, fog_placement, dewiggling_method, dilate_model_component]
-    inputs: [clustering.xi_post_recon_qso]
+    inputs: [xi_post_recon_qso]
     recipe:
       command: >-
         python -u scripts/compute_bao_detection.py --output {output} --tracer qso
@@ -1211,6 +1124,7 @@ outputs:
 
   - id: bao_detection_plot
     type: figure
+    format: png
     description: |
       BAO detection significance per tracer. $\Delta\chi^2$ between a
       no-BAO (broadband-only) reference and the damped-BAO template, as a
@@ -1231,6 +1145,7 @@ outputs:
 
   - id: bao_distance_table
     type: table
+    format: csv
     description: |
       Final DESI DR1 BAO distance constraints, per tracer at its
       effective redshift $z_\mathrm{eff}$: the comoving transverse
@@ -1256,6 +1171,7 @@ outputs:
 
   - id: distance_residuals_plot
     type: figure
+    format: png
     description: |
       Corner plot of post-recon BAO distance posteriors with α residuals
       from fiducial Planck 2018-ΛCDM in a top inset.
@@ -1269,6 +1185,7 @@ outputs:
 
   - id: hubble_diagram_plot
     type: figure
+    format: png
     description: |
       The DESI DR1 BAO distances on the Hubble diagram. From top to
       bottom: $D_M/r_d$, $D_H/r_d$, $D_V/r_d$, and $D_M/D_H$ as a
@@ -1599,7 +1516,7 @@ prior_insights:
   fog_decoupled_from_wiggles_fiducial:
     id: fog_decoupled_from_wiggles_fiducial
     claim: "The fiducial DESI choice applies the Fingers-of-God (Σ_s) damping only to the smooth model component and not to the BAO wiggle component; previous models applied FoG to both, and the fiducial decoupling makes BAO damping interpretation simpler."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1614,7 +1531,7 @@ prior_insights:
   fog_decoupling_breaks_degeneracy:
     id: fog_decoupling_breaks_degeneracy
     claim: "Including the FoG damping only in the smooth component removes a clear degeneracy between the BAO (Σ_||) damping and the FoG (Σ_s) damping scales, making prior enforcement and convergence easier."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1629,7 +1546,7 @@ prior_insights:
   fog_placement_systematic_size:
     id: fog_placement_systematic_size
     claim: "Placing the FoG damping on the wiggle component in addition to the smooth component shifts α_AP by an average of 0.11% (a 2σ-detected systematic) and α_iso by ≤ 0.02%, motivating inclusion of this effect in the modelling systematic budget."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1644,7 +1561,7 @@ prior_insights:
   wallisch_dewiggling_fiducial:
     id: wallisch_dewiggling_fiducial
     claim: "The DESI fiducial BAO template is constructed using the Wallisch (2018) peak-averaging/dewiggling method; previous BOSS/eBOSS analyses used varying methods (Eisenstein-Hu, Kirkby, etc.)."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1659,7 +1576,7 @@ prior_insights:
   dewiggling_method_systematic_size:
     id: dewiggling_method_systematic_size
     claim: "The choice of wiggle/no-wiggle split method (Eisenstein-Hu, Hinton+2017, Wallisch, Brieden+2022, Savitzky-Golay) introduces a maximum modelling systematic of only 0.02% on α_iso and 0.09% on α_AP under the fiducial fitting methodology, with no single method theoretically preferred."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1674,7 +1591,7 @@ prior_insights:
   dilate_wiggles_only_fiducial:
     id: dilate_wiggles_only_fiducial
     claim: "DESI fiducial practice dilates only the BAO wiggle component by α, not the full template; previous analyses dilated both smooth and wiggle components, and dilating only wiggles guarantees that α captures only BAO information."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1689,7 +1606,7 @@ prior_insights:
   dilate_wiggles_only_systematic_size:
     id: dilate_wiggles_only_systematic_size
     claim: "Whether the smooth component is dilated in addition to the wiggle component induces a modelling systematic of < 0.02% on α_iso and < 0.09% on α_AP."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1704,7 +1621,7 @@ prior_insights:
   spline_broadband_fiducial:
     id: spline_broadband_fiducial
     claim: "DESI adopts a cubic-spline-based broadband model as fiducial, replacing the polynomial broadband used by previous (e)BOSS analyses, because the spline method has stronger theoretical motivation and is less arbitrary in its choice of free parameters."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1719,7 +1636,7 @@ prior_insights:
   damping_prior_gaussian_fiducial:
     id: damping_prior_gaussian_fiducial
     claim: "Tight Gaussian priors (width 1-2 h^-1 Mpc) on the BAO damping parameters centered on theory values are recommended; fully fixing them risks biases and flat priors can also bias α and weaken constraints on noisy data."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1743,7 +1660,7 @@ prior_insights:
   damping_prior_width_justification:
     id: damping_prior_width_justification
     claim: "Biases of order 0.1% in α_iso and 0.2% in α_AP appear when the damping parameters are misspecified by more than ~2 h^-1 Mpc from their fiducial values, justifying Gaussian priors of width 1-2 h^-1 Mpc."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1758,7 +1675,7 @@ prior_insights:
   combined_systematic_budget:
     id: combined_systematic_budget
     claim: "Summing theory and modelling systematics in quadrature, the recommended combined systematic budget for DESI post-reconstruction BAO is 0.1% on α_iso and 0.2% on α_AP."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.2402.14070"
@@ -1774,7 +1691,7 @@ prior_insights:
   sigma_perp_parallel_formula:
     id: sigma_perp_parallel_formula
     claim: "Σ⊥ and Σ∥ follow Σ⊥ = Σ0·G, Σ∥ = Σ0·G·(1+f) where Σ0 = 12.4 h^-1 Mpc for σ8 = 0.9 at z=0, scaling linearly with σ8 and redshift via the growth function -- the theoretical prediction that anchors the Gaussian prior centres."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0701079"
@@ -1790,7 +1707,7 @@ prior_insights:
   gaussian_lagrangian_displacement_model:
     id: gaussian_lagrangian_displacement_model
     claim: "Nonlinear erasure of the BAO is modelled as convolution with a Gaussian Lagrangian-displacement distribution, which Fourier-transforms to the multiplicative exp(-k²Σ²/2) damping form used in BAO template fits."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0701079"
@@ -1805,7 +1722,7 @@ prior_insights:
   bias_weak_effect_on_sigma:
     id: bias_weak_effect_on_sigma
     claim: "Because Lagrangian displacements are dominated by bulk flows, galaxy bias has only a small effect on Σ⊥/Σ∥: highly biased tracers increase Lagrangian variances only by small amounts. Supports tracer-common Σ priors with modest tracer-dependent offsets."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0701079"
@@ -1830,7 +1747,7 @@ prior_insights:
   planck2018_headline_parameters:
     id: planck2018_headline_parameters
     claim: "Planck 2018 TT,TE,EE+lowE+lensing base-ΛCDM gives Ω_b h² = 0.02237, Ω_c h² = 0.1200, n_s = 0.9649, H0 = 67.36 km/s/Mpc, Ω_m = 0.3153 -- the values adopted as AbacusSummit c000."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.1807.06209"
@@ -1882,7 +1799,7 @@ prior_insights:
   planck2018_rdrag_precision:
     id: planck2018_rdrag_precision
     claim: "Planck 2018 base-ΛCDM constrains the sound horizon at the drag epoch to r_drag = 147.09 ± 0.26 Mpc, the CMB anchor for the BAO standard ruler."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.1807.06209"
@@ -1897,7 +1814,7 @@ prior_insights:
   planck2018_neutrino_convention:
     id: planck2018_neutrino_convention
     claim: "Planck 2018 base-ΛCDM assumes three neutrino species approximated as two massless and a single massive neutrino of mass m_ν = 0.06 eV; Ω_m includes this neutrino contribution."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.1807.06209"
@@ -1921,7 +1838,7 @@ prior_insights:
   planck2018_neff_constraint:
     id: planck2018_neff_constraint
     claim: "Planck 2018 + BAO constrains N_eff = 2.99 ± 0.17, consistent with the Standard Model N_eff = 3.046 -- showing AbacusSummit c003 (N_eff = 3.70) is well outside the Planck preferred range."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.1807.06209"
@@ -1937,7 +1854,7 @@ prior_insights:
   recon_sharpens_bao_peak:
     id: recon_sharpens_bao_peak
     claim: "Density-field reconstruction sharpens the acoustic peak in the correlation function (equivalently, restores higher harmonics in the power spectrum) -- the core motivation for applying reconstruction before BAO measurement."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -1952,7 +1869,7 @@ prior_insights:
   nonlinear_peak_smearing:
     id: nonlinear_peak_smearing
     claim: "Nonlinear structure formation and redshift-space distortions displace galaxies from their initial positions, blurring the BAO peak at ~150 Mpc and erasing higher harmonics in P(k)."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -1967,7 +1884,7 @@ prior_insights:
   precision_loss_factor_three:
     id: precision_loss_factor_three
     claim: "Nonlinear smearing reduces the precision of the BAO distance scale achievable per unit survey volume by roughly a factor of three at the present day."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -1982,7 +1899,7 @@ prior_insights:
   recon_effective_at_low_z:
     id: recon_effective_at_low_z
     claim: "Reconstruction is particularly effective at low redshift where nonlinearities are worst -- exactly the regime most sensitive to dark energy."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -1997,7 +1914,7 @@ prior_insights:
   factor_of_two_gain_at_z03:
     id: factor_of_two_gain_at_z03
     claim: "At z=0.3, reconstruction can reduce the sample-variance error bar on the acoustic scale by at least a factor of 2 and in principle nearly a factor of 4."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2012,7 +1929,7 @@ prior_insights:
   recon_factor_two_demonstrated:
     id: recon_factor_two_demonstrated
     claim: "The simple linear-theory reconstruction in this paper improves distance precision from 1.4%/1.9% to 0.75%/0.95% in real/redshift space at z=0.3 -- the canonical factor-of-two gain."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2027,7 +1944,7 @@ prior_insights:
   move_densities_not_particles:
     id: move_densities_not_particles
     claim: "The conceptual basis of reconstruction is to move measured densities (not all particles) back to their initial location -- established by shifting a reference grid of smoothly distributed particles alongside the real particles and differencing the densities."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2043,7 +1960,7 @@ prior_insights:
   reference_grid_shifted_same:
     id: reference_grid_shifted_same
     claim: "The seminal recon algorithm shifts a reference grid of smoothly distributed particles (i.e., randoms) by the same displacement field as the real particles -- the operational prescription behind RecSym."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2059,7 +1976,7 @@ prior_insights:
   reconstructed_density_as_difference:
     id: reconstructed_density_as_difference
     claim: "The reconstructed density field is defined as the difference between the shifted real-particle density and the shifted reference-particle density -- the symmetric convention that displaces both tracers and randoms."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2075,7 +1992,7 @@ prior_insights:
   recon_easier_at_high_z:
     id: recon_easier_at_high_z
     claim: "Reconstruction is easier at higher redshifts because raw displacements are smaller there -- corollary: reconstruction is most needed, and provides the largest gains, at low redshift."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2090,7 +2007,7 @@ prior_insights:
   recon_improves_bao_by_2_to_3:
     id: recon_improves_bao_by_2_to_3
     claim: "Overall conclusion: density-field reconstruction offers a factor-of-2-to-3 improvement to the BAO method, particularly at lower redshifts."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.astro-ph/0604362"
@@ -2106,7 +2023,7 @@ prior_insights:
   recon_reduces_bao_damping:
     id: recon_reduces_bao_damping
     claim: "Reconstruction reduces the non-linear damping of the BAO oscillations by about a factor of two when the input density field is smoothed on the non-linear scale."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.0812.2905"
@@ -2121,7 +2038,7 @@ prior_insights:
   recon_less_damped_pl:
     id: recon_less_damped_pl
     claim: "Within the Lagrangian/Zel'dovich framework, the linear-power-spectrum contribution to the reconstructed power spectrum is less damped than in the non-linear power spectrum -- the core theoretical reason reconstruction sharpens the BAO peak."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.0812.2905"
@@ -2136,7 +2053,7 @@ prior_insights:
   recon_reduces_mode_coupling:
     id: recon_reduces_mode_coupling
     claim: "Reconstruction also reduces the mode-coupling terms that introduce out-of-phase oscillation components and shift the acoustic peak -- complementary to the damping-reduction motivation."
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         doi: "10.48550/arXiv.0812.2905"
@@ -2165,7 +2082,7 @@ findings:
       100 Mpc/h post-recon than pre-recon, consistent with
       displacement-field reconstruction undoing the non-linear bulk
       flows that smear the acoustic signature.
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         artifact: bao_fit_plot
@@ -2181,7 +2098,7 @@ findings:
       Δχ²(α_iso) profiles comparing the damped-BAO template to a
       no-BAO reference show a well-defined minimum near α_iso ≈ 1
       in each case.
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         artifact: bao_detection_plot
@@ -2197,7 +2114,7 @@ findings:
       σ(α_iso) falls by a factor of ~1.4–1.8 across the 2D-fit tracers
       (LRG1 0.0167 → 0.0114, LRG2 0.0198 → 0.0113, LRG3 0.0131 →
       0.0093) and by ~2.9× for the 1D ELG1 fit (0.0772 → 0.0266).
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         artifact: bao_alpha_values
@@ -2213,7 +2130,7 @@ findings:
       σ(α_iso)/α_iso = 1.17 % for LRG1, 1.18 % for LRG2, and 0.93 %
       for LRG3 — placing the BAO scale at these redshifts to
       sub-percent in the best case.
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         artifact: bao_alpha_values
@@ -2230,7 +2147,7 @@ findings:
       ELG1 20.4/19. The damped-BAO template plus spline broadband
       adequately describes the measured correlation functions over
       the fit range.
-    created_at: "2026-04-23T12:00:00"
+    created_at: "2026-04-23T12:00:00Z"
     evidence:
       - id: ev1
         artifact: bao_alpha_values

@@ -23,9 +23,9 @@ Settings (fixed to match desipipe / DESI RascalC covariance):
   los='firstpoint', estimator='landyszalay' (pycorr default).
 
 Tracer-specific configuration (parents, z-range) comes from the root
-`scripts/tracers.py` registry. Writes (one directory per declared output_id):
-  results/<universe>/xi_pre_recon_<tracer>/xi_pre_recon_<tracer>.npy
-  results/<universe>/xi_post_recon_<tracer>/xi_post_recon_<tracer>.npy
+`scripts/tracers.py` registry. Writes deterministic artifact files:
+  results/<universe>/xi_pre_recon_<tracer>.npy
+  results/<universe>/xi_post_recon_<tracer>.npy
 """
 
 import argparse
@@ -62,16 +62,12 @@ RECON_NPZ = "../reconstruction/results/{universe}/post_recon_catalog_{parent}.np
 
 def parse_args():
     p = argparse.ArgumentParser()
-    # The recipe engine renders {output} as a single output dir
-    # (e.g. results/<universe>/xi_pre_recon_<tracer>/). compute_xi writes BOTH
-    # pre and post xi for the tracer in one invocation, so we derive the
-    # shared parent universe dir from --output (parents[1]) and place pre/post
-    # under sibling output_id subdirs there. Keeps `lc run xi_pre_recon_X` and
-    # `lc run xi_post_recon_X` interchangeable while honouring the engine's
-    # convention that the script writes into {output}.
+    # The recipe engine renders {output} as one deterministic artifact path.
+    # compute_xi writes both pre and post xi for a tracer, so either declared
+    # output can invoke it and the two files are placed beside each other.
     p.add_argument("--output", default=None,
-                   help="Destination directory (rendered from {output}); the universe "
-                        "dir is derived from it (parent of parent).")
+                   help="Destination artifact path rendered from {output}; its parent "
+                        "is the universe results directory.")
     p.add_argument("--universe", default=None,
                    help="Universe name (defaults to parent dir of --output).")
     p.add_argument("--tracer", required=True, choices=sorted(TRACERS))
@@ -484,21 +480,20 @@ def main():
     t0 = time.time()
 
     if args.output:
-        # {output} → results/<universe>/<output_id>/. Universe dir = parents[1].
-        out_dir_arg = Path(args.output)
-        universe = args.universe or out_dir_arg.parent.name
-        universe_dir = str(out_dir_arg.parent)
+        # {output} → results/<universe>/<output_id>.<format>
+        output_path = Path(args.output)
+        universe = args.universe or output_path.parent.name
+        universe_dir = output_path.parent
     else:
         universe = args.universe
-        universe_dir = f"results/{universe}"
+        universe_dir = Path("results") / universe
     args.universe = universe  # for downstream RECON_NPZ.format(...) call
     pre_id = f"xi_pre_recon_{tracer.id}"
     post_id = f"xi_post_recon_{tracer.id}"
-    pre_dir = f"{universe_dir}/{pre_id}"
-    post_dir = f"{universe_dir}/{post_id}"
+    pre_path = universe_dir / f"{pre_id}.npy"
+    post_path = universe_dir / f"{post_id}.npy"
     if rank == 0:
-        os.makedirs(pre_dir, exist_ok=True)
-        os.makedirs(post_dir, exist_ok=True)
+        universe_dir.mkdir(parents=True, exist_ok=True)
         log(f"Tracer: {tracer.id}  (parents={list(tracer.parent)}, "
             f"z in [{tracer.z_min}, {tracer.z_max}], pre-recon nran={tracer.nran})",
             t0, rank)
@@ -539,7 +534,6 @@ def main():
 
     if rank == 0:
         xi_gccomb = sum(cap_results)
-        pre_path = f"{pre_dir}/{pre_id}.npy"
         xi_gccomb.save(pre_path)
         log(f"Saved {pre_path}", t0, rank)
         del gal_caps, cap_results, xi_gccomb
@@ -581,7 +575,6 @@ def main():
 
     if rank == 0:
         xi_gccomb = sum(cap_results)
-        post_path = f"{post_dir}/{post_id}.npy"
         xi_gccomb.save(post_path)
         log(f"Saved {post_path}", t0, rank)
 

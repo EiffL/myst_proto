@@ -36,7 +36,7 @@ COV_ELLS = (0, 2, 4)
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--output", default=None,
-                   help="Destination directory (rendered from {output} by the recipe engine).")
+                   help="Destination artifact path rendered from {output} by the recipe engine.")
     p.add_argument("--universe", default=None,
                    help="Universe name (defaults to parent dir of --output).")
     args = p.parse_args()
@@ -67,11 +67,11 @@ def load_cov_sigmas(cov_path):
 def main():
     args = parse_args()
     if args.output:
-        cli_out_dir = Path(args.output)
-        universe = args.universe or cli_out_dir.parent.name
+        cli_output_path = Path(args.output)
+        universe = args.universe or cli_output_path.parent.name
     else:
         universe = args.universe
-        cli_out_dir = None
+        cli_output_path = None
     args.universe = universe
     out_dir = f"results/{universe}"
 
@@ -80,8 +80,8 @@ def main():
         tracer = get_tracer(tracer_id)
         pre_id = f"xi_pre_recon_{tracer.id}"
         post_id = f"xi_post_recon_{tracer.id}"
-        pre_path = f"{out_dir}/{pre_id}/{pre_id}.npy"
-        post_path = f"{out_dir}/{post_id}/{post_id}.npy"
+        pre_path = f"{out_dir}/{pre_id}.npy"
+        post_path = f"{out_dir}/{post_id}.npy"
         if not (os.path.exists(pre_path) and os.path.exists(post_path)):
             print(f"  skipped {tracer.id}: missing xi output")
             continue
@@ -135,9 +135,8 @@ def main():
                  fontsize=12)
     fig.tight_layout()
 
-    plot_dir = str(cli_out_dir) if cli_out_dir is not None else f"{out_dir}/xi_multipoles_plot"
-    os.makedirs(plot_dir, exist_ok=True)
-    fig_path = f"{plot_dir}/xi_multipoles_plot.png"
+    fig_path = cli_output_path or Path(out_dir) / "xi_multipoles_plot.png"
+    fig_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(fig_path, dpi=150, bbox_inches="tight")
     print(f"Saved {fig_path}")
 
