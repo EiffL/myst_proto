@@ -29,22 +29,18 @@ lc status                 # materialization state across the whole tree
 lc verify                 # validate the provenance chain
 ```
 
-Outputs from this sub-analysis land at
-`analyses/reconstruction/results/<universe>/<output_id>/` (relative to
-parent), with a sidecar `.lightcone-manifest.json` recording the recipe,
-container, decisions, input hashes, and output hash. Inside that
-directory the actual data file(s) sit next to the manifest -- e.g.
+Outputs from this sub-analysis land at deterministic paths under
+`analyses/reconstruction/results/<universe>/` (relative to the parent),
+for example:
 
 ```
-analyses/reconstruction/results/baseline/post_recon_catalog_lrg_full/
-  post_recon_catalog_lrg_full.npz
-  .lightcone-manifest.json
+analyses/reconstruction/results/baseline/post_recon_catalog_lrg_full.npz
 ```
 
 Note: on NERSC, `analyses/reconstruction/results` is a symlink to a
 `$SCRATCH` location because the post-recon NPZ catalogs are multi-GB.
-The per-`output_id` subdirectories live on scratch; only the symlink
-itself is tracked in git.
+The deterministic artifact files live on scratch; only the symlink itself
+is tracked in git.
 
 ### Sub-analysis Layout
 
@@ -57,7 +53,7 @@ universes/
   baseline.yaml         # Decision selections (mostly inherit from parent)
 scripts/                # Implementation scripts for this sub-analysis
 results/<universe>/
-  <output_id>/<file>    # Outputs (one directory per declared output_id)
+  <output_id>.<format>  # One deterministic artifact per declared output
 ```
 
 The Containerfile and requirements.txt live at the parent project root
@@ -69,8 +65,7 @@ Three overlapping phases (same as the parent):
 
 1. **Write & Debug** -- Run scripts directly to iterate. Write them
    recipe-ready: parameterize decisions on the command line, write to
-   the convention path
-   `results/<universe>/<output_id>/<filename>`, one script per output.
+   the convention path `results/<universe>/<output_id>.<format>`.
 2. **Integrate** -- Each output in `astra.yaml` has a `recipe:` block.
    Track materialization state with `lc status` from the parent project
    (`pending` / `ok` / `stale`). Container build specs (Containerfile or
@@ -109,7 +104,7 @@ change one, update the other immediately:
   parent or another sub-analysis, declare it there with `from: ../<key>`.
 - Add an output or change a script? Update the `recipe:` block in
   `astra.yaml` and ensure the script writes to
-  `results/<universe>/<output_id>/<filename>`.
+  `results/<universe>/<output_id>.<format>`.
 - Remove or rename something? Update both sides and run
   `astra validate ../../astra.yaml` from the parent.
 

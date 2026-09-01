@@ -5,8 +5,8 @@
 ASTRA (Agentic Schema for Transparent Research Analysis) sub-analysis,
 orchestrated by `lightcone-cli`. This is a path-rooted sub-analysis of
 the parent `iii-bao-galaxy-quasars` project — `lc run` invoked from the
-parent project root materializes outputs declared here under
-`analyses/clustering/results/<universe>/<output_id>/`.
+parent project root materializes outputs declared here as deterministic files
+under `analyses/clustering/results/<universe>/<output_id>.<format>`.
 
 ### Source of Truth
 
@@ -27,16 +27,11 @@ lc status                         # show what's materialized vs stale vs missing
 lc verify                         # validate the provenance chain
 ```
 
-Outputs land at
-`analyses/clustering/results/<universe>/<output_id>/` along with a
-sidecar `.lightcone-manifest.json` recording the recipe, container,
-decisions, input hashes, and output hash. Inside that directory the
-actual data file(s) sit next to the manifest -- e.g.
+Each output lands at exactly one path determined by its id and declared
+format, for example:
 
 ```
-analyses/clustering/results/baseline/xi_post_recon_lrg1/
-  xi_post_recon_lrg1.npy
-  .lightcone-manifest.json
+analyses/clustering/results/baseline/xi_post_recon_lrg1.npy
 ```
 
 ### Project Layout
@@ -48,7 +43,7 @@ universes/
   baseline.yaml         # Default decision selections
 scripts/                # Implementation scripts
 results/<universe>/
-  <output_id>/<file>    # Outputs (one directory per declared output_id)
+  <output_id>.<format>  # One deterministic artifact per declared output
 ```
 
 The parent project owns `Containerfile`, `requirements.txt`, the venv,
@@ -58,9 +53,8 @@ and the project-level `.lightcone/`, `.gitignore`, and `.claude/`.
 
 1. **Write & Debug** -- Run scripts directly (`python scripts/compute_xi.py
    --universe baseline --tracer bgs`) to iterate. Scripts write to the
-   convention path
-   `results/<universe>/<output_id>/<output_id>.<ext>` (one directory per
-   output_id, mirrored on disk under `analyses/clustering/`).
+   convention path `results/<universe>/<output_id>.<format>`, mirrored on
+   disk under `analyses/clustering/`.
 2. **Integrate** -- Each output in `astra.yaml` has a `recipe:` block.
    Track materialization state with `lc status` (`pending` / `ok` /
    `stale`) from the parent project root.
@@ -80,7 +74,7 @@ change one, update the other immediately:
 - Add a decision to code? Add it to `astra.yaml` and all universe files.
 - Add an output or change a script? Update the `recipe:` block in
   `astra.yaml` and ensure the script writes to
-  `results/<universe>/<output_id>/<output_id>.<ext>`.
+  `results/<universe>/<output_id>.<format>`.
 - Remove or rename something? Update both sides and run
   `astra validate astra.yaml` from the sub-analysis root.
 
@@ -90,4 +84,3 @@ change one, update the other immediately:
 ## Analysis Context
 
 _Run `/prism-new` to scope the research question and populate this section with domain context and implementation notes not captured in astra.yaml._
-

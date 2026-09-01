@@ -48,11 +48,11 @@ COSMO_FILE = "../../data/desi_fiducial_cosmology.dat"  # relative to sub-analysi
 
 def parse_args():
     p = argparse.ArgumentParser()
-    # The script writes TWO outputs (post_recon_catalog_<parent> + mean_displacement_<parent>)
-    # in one invocation. {output} from the recipe engine is one of them; we derive the
-    # shared universe dir as parent of parent and place both alongside.
+    # The script writes two outputs (catalog + mean-displacement metric) in
+    # one invocation. {output} is either deterministic file path; both files
+    # are placed in its parent universe directory.
     p.add_argument("--output", default=None,
-                   help="Destination directory (rendered from {output}); universe dir is its parent.")
+                   help="Destination artifact path rendered from {output}; its parent is the universe directory.")
     p.add_argument("--universe", default=None,
                    help="Universe name (defaults to parent dir of --output).")
     p.add_argument("--parent", required=True, choices=sorted(PARENTS))
@@ -181,12 +181,12 @@ def main():
     t0 = time.time()
 
     if args.output:
-        out_dir_arg = Path(args.output)
-        universe = args.universe or out_dir_arg.parent.name
-        universe_dir = str(out_dir_arg.parent)
+        output_path = Path(args.output)
+        universe = args.universe or output_path.parent.name
+        universe_dir = output_path.parent
     else:
         universe = args.universe
-        universe_dir = f"results/{universe}"
+        universe_dir = Path("results") / universe
     args.universe = universe
 
     # Paper Table 4: QSO reconstruction uses sm30 while BGS/LRG/ELG use sm15.
@@ -262,15 +262,12 @@ def main():
         mean_disp = float(np.linalg.norm(gal_pos_shift - gal_pos, axis=1).mean())
         log(f"Mean displacement: {mean_disp:.3f} Mpc/h", t0, rank)
 
-        # Convention output paths: results/<universe>/<output_id>/<filename>
+        # Deterministic output paths: results/<universe>/<output_id>.<format>
         cat_oid = f"post_recon_catalog_{parent.id}"
         metric_oid = f"mean_displacement_{parent.id}"
-        cat_dir = f"{universe_dir}/{cat_oid}"
-        metric_dir = f"{universe_dir}/{metric_oid}"
-        os.makedirs(cat_dir, exist_ok=True)
-        os.makedirs(metric_dir, exist_ok=True)
+        universe_dir.mkdir(parents=True, exist_ok=True)
 
-        cat_path = f"{cat_dir}/{cat_oid}.npz"
+        cat_path = universe_dir / f"{cat_oid}.npz"
         np.savez_compressed(
             cat_path,
             gal_pos=gal_pos, gal_pos_shift=gal_pos_shift,
@@ -287,7 +284,7 @@ def main():
         log(f"Saved {cat_path}", t0, rank)
         sys.stdout.flush()
 
-        metric_path = f"{metric_dir}/{metric_oid}.json"
+        metric_path = universe_dir / f"{metric_oid}.json"
         with open(metric_path, "w") as fh:
             json.dump({"value": mean_disp, "units": "Mpc/h"}, fh)
         log(f"Saved {metric_path}", t0, rank)
