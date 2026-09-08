@@ -131,3 +131,5 @@ Extras:
 and paths mean the same thing on every page. A page's *store scope* follows the
 dotted-filename convention (`reconstruction.md` → the `reconstruction`
 sub-analysis); cross-page links use plain MyST anchors (`[](#output-<id>)`).
+
+
