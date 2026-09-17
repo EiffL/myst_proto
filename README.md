@@ -1,6 +1,5 @@
 # DESI DR1 BAO — astra-theme live example
 
-
 This project renders the real DESI DR1 BAO analysis through **astra-theme**,
 authored with the [MySTRA](https://github.com/LightconeResearch/MySTRA) plugin
 (`@astra-spec/mystra`).
