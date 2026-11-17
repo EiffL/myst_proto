@@ -1,211 +1,251 @@
-version: "0.0.14"
-name: Reconstruction
-description: >-
-  Density-field reconstruction for the DESI DR1 parent samples, producing
-  shifted galaxy and random catalogs with diagnostic displacement metrics.
-
-inputs:
-  - id: desi_dr1_lss_catalogs
-    from: ../desi_dr1_lss_catalogs        # parent input (raw data + randoms, all tracers)
-
-  - id: desi_fiducial_cosmology
-    from: ../desi_fiducial_cosmology      # parent input (z -> r table)
-
+spec_version: 0.1.0
+label: Reconstruction
+description: Density-field reconstruction for the DESI DR1 parent samples, producing shifted galaxy and random
+  catalogs with diagnostic displacement metrics.
+analyses:
+  parent:
+    path: ../..
 outputs:
-  # --- BGS parent (z = 0.1 - 0.4) ---------------------------------------------
-  - id: post_recon_catalog_bgs_full
+  post_recon_catalog_bgs_full:
     type: data
     format: npz
-    description: |
-      Shifted galaxy + random catalogs after reconstruction, BGS parent sample
-      (z=0.1-0.4, BGS_BRIGHT-21.5). Same NPZ format as
-      post_recon_catalog_lrg_full. The BGS tracer uses the full parent range
-      (not sub-binned).
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: "Shifted galaxy + random catalogs after reconstruction, BGS parent sample\n(z=0.1-0.4, BGS_BRIGHT-21.5).
+      Same NPZ format as\npost_recon_catalog_lrg_full. The BGS tracer uses the full parent range\n(not sub-binned).\n"
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent bgs_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  - id: mean_displacement_bgs_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent bgs_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  mean_displacement_bgs_full:
     type: metric
     format: json
-    description: "Mean |Psi| for BGS parent (Mpc/h)."
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: Mean |Psi| for BGS parent (Mpc/h).
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent bgs_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  # --- LRG parent (z = 0.4 - 1.1) ---------------------------------------------
-  - id: post_recon_catalog_lrg_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent bgs_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  post_recon_catalog_lrg_full:
     type: data
     format: npz
-    description: |
-      Shifted galaxy + random catalogs after reconstruction, LRG parent sample
-      (z=0.4-1.1). NPZ with arrays: gal_pos, gal_pos_shift, gal_weights, gal_z,
-      ran_pos, ran_pos_shift, ran_weights, ran_z (NGC+SGC concatenated;
-      positions in Cartesian Mpc/h, DESI fiducial cosmology). Downstream xi
-      computation slices by tracer z-range using gal_z / ran_z.
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: "Shifted galaxy + random catalogs after reconstruction, LRG parent sample\n(z=0.4-1.1). NPZ with
+      arrays: gal_pos, gal_pos_shift, gal_weights, gal_z,\nran_pos, ran_pos_shift, ran_weights, ran_z (NGC+SGC concatenated;\n\
+      positions in Cartesian Mpc/h, DESI fiducial cosmology). Downstream xi\ncomputation slices by tracer z-range
+      using gal_z / ran_z.\n"
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent lrg_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  - id: mean_displacement_lrg_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent lrg_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  mean_displacement_lrg_full:
     type: metric
     format: json
-    description: "Mean |Psi| for LRG parent (Mpc/h). Typically 5-10 Mpc/h for LRGs."
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: Mean |Psi| for LRG parent (Mpc/h). Typically 5-10 Mpc/h for LRGs.
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent lrg_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  # --- QSO parent (z = 0.8 - 2.1) ---------------------------------------------
-  - id: post_recon_catalog_qso_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent lrg_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  post_recon_catalog_qso_full:
     type: data
     format: npz
-    description: |
-      Shifted galaxy + random catalogs after reconstruction, QSO parent sample
-      (z=0.8-2.1). Same NPZ format as post_recon_catalog_lrg_full. QSO uses
-      Sigma_sm = 30 h^-1 Mpc rather than 15 h^-1 Mpc.
-    decisions: [algorithm, convention, smoothing_radius_qso, bias_input, n_iterations]
+    description: "Shifted galaxy + random catalogs after reconstruction, QSO parent sample\n(z=0.8-2.1). Same NPZ
+      format as post_recon_catalog_lrg_full. QSO uses\nSigma_sm = 30 h^-1 Mpc rather than 15 h^-1 Mpc.\n"
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius_qso
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent qso_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius_qso {decisions.smoothing_radius_qso}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  - id: mean_displacement_qso_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent qso_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius_qso
+        {decisions.parent.smoothing_radius_qso} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  mean_displacement_qso_full:
     type: metric
     format: json
-    description: "Mean |Psi| for QSO parent (Mpc/h)."
-    decisions: [algorithm, convention, smoothing_radius_qso, bias_input, n_iterations]
+    description: Mean |Psi| for QSO parent (Mpc/h).
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius_qso
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent qso_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius_qso {decisions.smoothing_radius_qso}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  # --- ELG parent (z = 0.8 - 1.6) ---------------------------------------------
-  - id: post_recon_catalog_elg_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent qso_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius_qso
+        {decisions.parent.smoothing_radius_qso} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  post_recon_catalog_elg_full:
     type: data
     format: npz
-    description: |
-      Shifted galaxy + random catalogs after reconstruction, ELG parent sample
-      (z=0.8-1.6). Same format as post_recon_catalog_lrg_full. Sliced
-      downstream into ELG1 (0.8-1.1) and (later) ELG2 (1.1-1.6).
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: "Shifted galaxy + random catalogs after reconstruction, ELG parent sample\n(z=0.8-1.6). Same format
+      as post_recon_catalog_lrg_full. Sliced\ndownstream into ELG1 (0.8-1.1) and (later) ELG2 (1.1-1.6).\n"
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent elg_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
-  - id: mean_displacement_elg_full
+      command: python -u scripts/run_reconstruction.py --output {output} --parent elg_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
+  mean_displacement_elg_full:
     type: metric
     format: json
-    description: "Mean |Psi| for ELG parent (Mpc/h)."
-    decisions: [algorithm, convention, smoothing_radius, bias_input, n_iterations]
+    description: Mean |Psi| for ELG parent (Mpc/h).
+    decisions:
+    - algorithm
+    - convention
+    - parent.smoothing_radius
+    - bias_input
+    - n_iterations
     recipe:
-      command: >-
-        python -u scripts/run_reconstruction.py --output {output} --parent elg_full
-        --algorithm {decisions.algorithm} --convention {decisions.convention}
-        --smoothing_radius {decisions.smoothing_radius}
-        --bias_input {decisions.bias_input} --n_iterations {decisions.n_iterations}
-      resources: { cpus: 16, memory: "128GB", time_limit: "2h" }
-
+      command: python -u scripts/run_reconstruction.py --output {output} --parent elg_full --algorithm
+        {decisions.algorithm} --convention {decisions.convention} --smoothing_radius
+        {decisions.parent.smoothing_radius} --bias_input {decisions.bias_input} --n_iterations
+        {decisions.n_iterations}
+      resources:
+        cpus: 16
+        memory: 128GB
+        time_limit: 2h
+    inputs:
+    - parent.desi_dr1_lss_catalogs
+    - parent.desi_fiducial_cosmology
 decisions:
-
   algorithm:
-    label: "Reconstruction algorithm"
-    tags: [reconstruction, method]
-    rationale: |
-      Fiducial choice is IterativeFFT. MultiGrid is the main
-      alternative; results are consistent (HOD-level).
-    default: iterative_fft
+    label: Reconstruction algorithm
+    tags:
+    - reconstruction
+    - method
+    rationale: "Fiducial choice is IterativeFFT. MultiGrid is the main\nalternative; results are consistent (HOD-level).\n"
     options:
       iterative_fft:
-        label: "IterativeFFT (pyrecon)"
-        description: "Iterative FFT-based reconstruction (fiducial)."
+        label: IterativeFFT (pyrecon)
+        description: Iterative FFT-based reconstruction (fiducial).
       multigrid:
-        label: "MultiGrid (pyrecon)"
-        description: "Alternative; near-identical BAO scales."
-
+        label: MultiGrid (pyrecon)
+        description: Alternative; near-identical BAO scales.
   convention:
-    label: "Reconstruction convention"
-    tags: [reconstruction, method]
-    rationale: |
-      RecSym shifts both data and randoms by the redshift-space displacement
-      (fiducial -- physically motivated, simpler BAO damping).
-      RecIso is the legacy convention (data shifted by full
-      displacement, randoms by real-space-only).
-    default: recsym
+    label: Reconstruction convention
+    tags:
+    - reconstruction
+    - method
+    rationale: "RecSym shifts both data and randoms by the redshift-space displacement\n(fiducial -- physically
+      motivated, simpler BAO damping).\nRecIso is the legacy convention (data shifted by full\ndisplacement, randoms
+      by real-space-only).\n"
     options:
       recsym:
-        label: "RecSym"
-        description: "Symmetric shifts of data + randoms (fiducial)."
+        label: RecSym
+        description: Symmetric shifts of data + randoms (fiducial).
       reciso:
-        label: "RecIso"
-        description: "Legacy convention; isotropic-only random shift."
-
-  smoothing_radius:
-    from: ../smoothing_radius       # inherited from the root (shared with BAO-fit scripts)
-
-  smoothing_radius_qso:
-    from: ../smoothing_radius_qso   # QSO-only fiducial (sm30)
-
+        label: RecIso
+        description: Legacy convention; isotropic-only random shift.
   bias_input:
-    label: "Linear bias used in reconstruction"
-    tags: [reconstruction, method]
-    rationale: |
-      Reconstruction needs a galaxy bias to convert observed density into a
-      matter displacement. Fiducial is a fixed value per parent sample;
-      alternatively we can estimate b from the large-scale clustering of the
-      data itself.
-    default: fixed
+    label: Linear bias used in reconstruction
+    tags:
+    - reconstruction
+    - method
+    rationale: "Reconstruction needs a galaxy bias to convert observed density into a\nmatter displacement. Fiducial
+      is a fixed value per parent sample;\nalternatively we can estimate b from the large-scale clustering of the\n\
+      data itself.\n"
     options:
       fixed:
-        label: "Fixed"
-        description: "Use the per-parent fiducial bias."
+        label: Fixed
+        description: Use the per-parent fiducial bias.
       estimated_from_data:
-        label: "Estimated from data"
-        description: "Fit b from the pre-recon P(k) at k < BIAS_KMAX."
-
+        label: Estimated from data
+        description: Fit b from the pre-recon P(k) at k < BIAS_KMAX.
   n_iterations:
-    label: "Number of reconstruction iterations"
-    tags: [reconstruction, method]
-    rationale: |
-      IterativeFFT iterates the displacement solve. 3 is the standard choice;
-      results are robust beyond ~3 iterations.
-    default: n3
+    label: Number of reconstruction iterations
+    tags:
+    - reconstruction
+    - method
+    rationale: "IterativeFFT iterates the displacement solve. 3 is the standard choice;\nresults are robust beyond
+      ~3 iterations.\n"
     options:
       n1:
-        label: "1 iteration"
-        description: "Single solve; ZA-equivalent for IterativeFFT."
+        label: 1 iteration
+        description: Single solve; ZA-equivalent for IterativeFFT.
       n3:
-        label: "3 iterations"
-        description: "Standard choice (pyrecon default)."
+        label: 3 iterations
+        description: Standard choice (pyrecon default).
       n5:
-        label: "5 iterations"
-        description: "Convergence check."
+        label: 5 iterations
+        description: Convergence check.
