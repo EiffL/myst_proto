@@ -68,7 +68,7 @@ project:
   plugins:
     # MySTRA has no published release that reads ASTRA 0.1 yet. This is its
     # bundle (`npm run bundle`) built from astra-project/MySTRA commit
-    # ebe95c23edaecde8fe425af298f6d1ab413882f2; replace it with a release URL
+    # 8772bb1bde7cc4fdf16b3ed8682e9e5b68c67be1; replace it with a release URL
     # once one exists.
     - plugins/mystra.mjs
   toc:

@@ -31,7 +31,7 @@ under `analyses/clustering/results/baseline/`.
 
 How it's wired (see `myst.yml`):
 - `project.plugins:` — `plugins/mystra.mjs`, a MySTRA bundle built from
-  [`ebe95c23`](https://github.com/astra-project/MySTRA/commit/ebe95c23edaecde8fe425af298f6d1ab413882f2)
+  [`8772bb1`](https://github.com/astra-project/MySTRA/commit/8772bb1bde7cc4fdf16b3ed8682e9e5b68c67be1)
   until a MySTRA release reads ASTRA 0.1. It emits the neutral `astra-*` markers + the per-page resolved store.
 - `site.template: https://github.com/EiffL/astra-article-theme.git` — the
   published ASTRA article theme (`v0.0.9`).

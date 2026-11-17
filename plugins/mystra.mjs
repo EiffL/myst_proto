@@ -84954,13 +84954,13 @@ function isDecisionRendered(decision) {
 }
 function supportingInsightsParagraph(insightPaths, records) {
   const refs = [];
-  for (const canonicalPath of insightPaths) {
-    const insight = records.get(canonicalPath);
+  for (const insightRef of insightPaths) {
+    const insight = records.get(insightRef);
     if (!insight) continue;
     const linkText = insight.label ?? insight.claim ?? localId(insight);
     refs.push(
       refNode(insight.kind, localId(insight), linkText, void 0, {
-        canonicalPath
+        ref: insightRef
       })
     );
   }
@@ -85586,7 +85586,7 @@ function renderFindingParts(id, scope2, options2, index3) {
         ...evidenceOptions(scope2)
       }
     ),
-    { kind: "finding", id, canonicalPath: finding.ref }
+    { kind: "finding", id, ref: finding.ref }
   );
 }
 function renderPriorInsightBlock(id, insight, scope2) {
@@ -85611,7 +85611,7 @@ function renderPriorInsightBlock(id, insight, scope2) {
   stampAstra(node3, {
     kind: "prior_insight",
     id,
-    canonicalPath: insight.ref
+    ref: insight.ref
   });
   return node3;
 }
@@ -85620,7 +85620,7 @@ function renderOneInput(id, scope2) {
   if (!input3) throw new Error(`no input "${id}" in this scope`);
   const table5 = renderInputsTable([input3], scope2.prose);
   addClass(table5, "astra-input");
-  stampAstra(table5, { kind: "input", id, canonicalPath: input3.ref });
+  stampAstra(table5, { kind: "input", id, ref: input3.ref });
   return [table5];
 }
 function renderOneOption(decisionId, optionId, scope2) {
@@ -85653,7 +85653,7 @@ function renderOneOption(decisionId, optionId, scope2) {
   stampAstra(head2, {
     kind: "option",
     id: optionId,
-    canonicalPath: decision.ref
+    ref: decision.ref
   });
   return nodes;
 }
@@ -85674,7 +85674,7 @@ function renderOneEvidence(p5, scope2) {
     stampAstra(nodes[0], {
       kind: "evidence",
       id: p5.child.id,
-      canonicalPath: owner.ref,
+      ref: owner.ref,
       evidenceIndex
     });
   }
@@ -85691,7 +85691,7 @@ function renderSubAnalysisCard(subId, scope2) {
   stampAstra(node3, {
     kind: "analysis",
     id: subId,
-    analysisPath: sub2.key
+    analysisKey: sub2.key
   });
   return [node3];
 }
@@ -85705,7 +85705,7 @@ function renderDecisionBlock(id, decision, scope2) {
       scope2.tabItem,
       selectedOption(scope2, decision)
     ),
-    { kind: "decision", id, canonicalPath: decision.ref }
+    { kind: "decision", id, ref: decision.ref }
   );
 }
 function stampRegistryRows(table5, records, kind) {
@@ -85714,7 +85714,7 @@ function stampRegistryRows(table5, records, kind) {
     stampAstra(rows[index3], {
       kind,
       id: localId(record2),
-      canonicalPath: record2.ref
+      ref: record2.ref
     });
   });
 }
@@ -85797,7 +85797,7 @@ function renderElement(p5, scope2, options2) {
       if (options2.caption) applyCaption(nodes, scope2, options2.caption);
       return tagComponent(
         nodes,
-        { kind: "output", id, canonicalPath: output2.ref },
+        { kind: "output", id, ref: output2.ref },
         output2.type
       );
     }
@@ -85974,7 +85974,7 @@ function resolveInlineRef(p5, scope2, display) {
         kind: "analysis",
         id,
         label: display ?? sub2.label ?? humanize(id),
-        analysisPath: sub2.key
+        analysisKey: sub2.key
       };
     }
     case "inputs": {
@@ -86169,12 +86169,12 @@ function renderAstraRefRequest(body3, project, prose, vfile2, analysisHrefs, sou
     }
     const scope2 = resolveScope(project, p5.scope, prose, vfile2, universe);
     const ref2 = resolveInlineRef(p5, scope2, display);
-    const canonicalPath = recordRef(p5, scope2);
-    const href = ref2.analysisPath !== void 0 ? analysisHrefs.get(ref2.analysisPath) : void 0;
-    const identity2 = ref2.kind === "analysis" && ref2.analysisPath !== void 0 ? {
-      analysisPath: ref2.analysisPath,
+    const elementRef = recordRef(p5, scope2);
+    const href = ref2.analysisKey !== void 0 ? analysisHrefs.get(ref2.analysisKey) : void 0;
+    const identity2 = ref2.kind === "analysis" && ref2.analysisKey !== void 0 ? {
+      analysisKey: ref2.analysisKey,
       ...href ? { href } : {}
-    } : canonicalPath ? { canonicalPath } : {};
+    } : elementRef ? { ref: elementRef } : {};
     return [
       refNode(ref2.kind, ref2.id, ref2.label, ref2.subtype, {
         ...identity2,
@@ -86202,15 +86202,15 @@ function renderCiteRequest(request, project, prose, vfile2, sourceNode) {
     const dois = refDois(p5, scope2);
     if (dois.length === 0) {
       const ref2 = resolveInlineRef(p5, scope2, display);
-      const canonicalPath = recordRef(p5, scope2);
+      const elementRef = recordRef(p5, scope2);
       return [
         refNode(
           ref2.kind,
           ref2.id,
           ref2.label,
           ref2.subtype,
-          canonicalPath ? {
-            canonicalPath,
+          elementRef ? {
+            ref: elementRef,
             ...scope2.universe ? { universe: scope2.universe } : {},
             ...p5.child?.collection === "evidence" ? { evidenceIndex: Number(p5.child.id) } : {}
           } : void 0
@@ -86250,7 +86250,7 @@ function renderValue(request, project, prose, vfile2, sourceNode) {
       vfile2,
       options2.universe
     );
-    const canonicalPath = recordRef(parsed, scope2);
+    const elementRef = recordRef(parsed, scope2);
     if (parsed.collection === "decisions") {
       const decision = scope2.decisionsById.get(id);
       if (!decision) return fail(`no decision "${id}"`);
@@ -86267,7 +86267,7 @@ function renderValue(request, project, prose, vfile2, sourceNode) {
         id,
         label,
         "decision",
-        canonicalPath ? { canonicalPath } : void 0
+        elementRef ? { ref: elementRef } : void 0
       );
       Object.assign(node4.data.astra, {
         ...scope2.universe ? { universe: scope2.universe } : {},
@@ -86280,11 +86280,11 @@ function renderValue(request, project, prose, vfile2, sourceNode) {
       return fail(`"${path2}" is not an output or decision`);
     }
     const output2 = scope2.outputsById.get(id);
-    if (!output2 || !canonicalPath) return fail(`no output "${id}"`);
+    if (!output2 || !elementRef) return fail(`no output "${id}"`);
     if (!selectedResult(scope2, output2)) {
       return fail(inactiveUnderUniverse("output", id, scope2));
     }
-    const absolutePath = scope2.results(canonicalPath);
+    const absolutePath = scope2.results(elementRef);
     if (!absolutePath) {
       reportWarn(
         vfile2,
@@ -86302,7 +86302,7 @@ function renderValue(request, project, prose, vfile2, sourceNode) {
         if (options2.pm && uncertainty !== void 0 && uncertainty !== "") {
           value2 += ` \xB1 ${fmtNum(String(uncertainty), 2)}`;
         }
-        const node4 = refNode("value", id, value2, "metric", { canonicalPath });
+        const node4 = refNode("value", id, value2, "metric", { ref: elementRef });
         const unit = metric.unit;
         Object.assign(node4.data.astra, {
           ...scope2.universe ? { universe: scope2.universe } : {},
@@ -86342,7 +86342,7 @@ function renderValue(request, project, prose, vfile2, sourceNode) {
       }
     }
     const filter = filters.map(([key2, item]) => `${key2}=${item}`).join(", ");
-    const node3 = refNode("value", id, value, output2.type, { canonicalPath });
+    const node3 = refNode("value", id, value, output2.type, { ref: elementRef });
     Object.assign(node3.data.astra, {
       ...scope2.universe ? { universe: scope2.universe } : {},
       col: column,
