@@ -12,7 +12,8 @@ under `analyses/clustering/results/<universe>/<output_id>.<format>`.
 
 - `astra.yaml` -- The sub-analysis specification (decisions, inputs,
   outputs, recipes). Read this first.
-- `universes/` -- Decision selections (one YAML per universe).
+- `../../astra.yaml` -- Parent specification; its `universes:` holds the
+  decision selections for every analysis.
 - `../../.claude/guides/` -- Reference docs for astra.yaml structure
   (shared with the parent project).
 
@@ -39,8 +40,6 @@ analyses/clustering/results/baseline/xi_post_recon_lrg1.npy
 ```
 astra.yaml              # Sub-analysis spec: decisions, inputs, outputs
 CLAUDE.md               # This file
-universes/
-  baseline.yaml         # Default decision selections
 scripts/                # Implementation scripts
 results/<universe>/
   <output_id>.<format>  # One deterministic artifact per declared output
@@ -71,7 +70,8 @@ directly is for debugging only -- final results must always come from
 **`astra.yaml` must always reflect the code and vice versa.** When you
 change one, update the other immediately:
 
-- Add a decision to code? Add it to `astra.yaml` and all universe files.
+- Add a decision to code? Add it to `astra.yaml` and select it in the
+  universes of `../../astra.yaml`.
 - Add an output or change a script? Update the `recipe:` block in
   `astra.yaml` and ensure the script writes to
   `results/<universe>/<output_id>.<format>`.

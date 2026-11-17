@@ -10,9 +10,9 @@ orchestrated by `lightcone-cli` from the parent project at
 
 - `astra.yaml` -- Sub-analysis specification (decisions, inputs, outputs,
   recipes). Read this first.
-- `universes/baseline.yaml` -- Default decision selections for this
-  sub-analysis. Most decisions inherit from the parent
-  (`../../universes/baseline.yaml`) via `from: ../<key>`.
+- Universes (decision selections) are declared under `universes:` in
+  the parent `../../astra.yaml`. Shared decisions and inputs are the
+  parent's, referenced as `parent.<key>`.
 - `../../astra.yaml` -- Parent specification; defines shared decisions
   and aggregates this sub-analysis under `analyses:`.
 - `.claude/guides/` (under the parent) -- Reference docs for astra.yaml
@@ -49,8 +49,6 @@ astra.yaml              # Sub-analysis spec: decisions, inputs, outputs
 CLAUDE.md               # This file
 .lightcone/
   lightcone.yaml        # target / scratch_root for `lc run`
-universes/
-  baseline.yaml         # Decision selections (mostly inherit from parent)
 scripts/                # Implementation scripts for this sub-analysis
 results/<universe>/
   <output_id>.<format>  # One deterministic artifact per declared output
@@ -99,9 +97,10 @@ used for batch scheduling; ignored under interactive allocation.
 **`astra.yaml` must always reflect the code and vice versa.** When you
 change one, update the other immediately:
 
-- Add a decision to code? Add it to `astra.yaml` and `universes/baseline.yaml`
-  (and any other universe files). If the decision is shared with the
-  parent or another sub-analysis, declare it there with `from: ../<key>`.
+- Add a decision to code? Add it to `astra.yaml` and select it in the
+  universes of `../../astra.yaml`. If the decision is shared with the
+  parent or another sub-analysis, declare it in the parent and reference
+  it as `parent.<key>`.
 - Add an output or change a script? Update the `recipe:` block in
   `astra.yaml` and ensure the script writes to
   `results/<universe>/<output_id>.<format>`.

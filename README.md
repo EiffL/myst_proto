@@ -4,6 +4,20 @@ This project renders the real DESI DR1 BAO analysis through **astra-theme**,
 authored with the [MySTRA](https://github.com/LightconeResearch/MySTRA) plugin
 (`@astra-spec/mystra`).
 
+It is an **ASTRA 0.1** example (`spec_version: 0.1.0`): the root `astra.yaml`
+declares the `reconstruction` and `clustering` sub-analyses and the universes
+(`baseline`, and the `no_imaging_weights` null test). Check it with
+[astra-tools](https://github.com/astra-project/astra-tools) 0.3:
+
+```bash
+astra validate      # the specification is valid
+astra status        # how each result's provenance record stands
+```
+
+The figures and tables under `results/` were precomputed outside an ASTRA
+runner, so they have no provenance records yet: `astra status` reports those
+records as missing.
+
 ## Run it
 
 ```bash
@@ -16,8 +30,9 @@ layout beside their own `astra.yaml`; for example, clustering artifacts live
 under `analyses/clustering/results/baseline/`.
 
 How it's wired (see `myst.yml`):
-- `project.plugins:` — the published MySTRA `v0.0.8` release bundle.
-  It emits the neutral `astra-*` markers + the per-page resolved store.
+- `project.plugins:` — `plugins/mystra.mjs`, a MySTRA bundle built from
+  [`ebe95c23`](https://github.com/astra-project/MySTRA/commit/ebe95c23edaecde8fe425af298f6d1ab413882f2)
+  until a MySTRA release reads ASTRA 0.1. It emits the neutral `astra-*` markers + the per-page resolved store.
 - `site.template: https://github.com/EiffL/astra-article-theme.git` — the
   published ASTRA article theme (`v0.0.9`).
 
