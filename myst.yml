@@ -66,7 +66,11 @@ project:
     FoG: Fingers of God
     HOD: halo occupation distribution
   plugins:
-    - https://github.com/LightconeResearch/MySTRA/releases/download/v0.0.8/mystra.mjs
+    # MySTRA has no published release that reads ASTRA 0.1 yet. This is its
+    # bundle (`npm run bundle`) built from astra-project/MySTRA commit
+    # ebe95c23edaecde8fe425af298f6d1ab413882f2; replace it with a release URL
+    # once one exists.
+    - plugins/mystra.mjs
   toc:
     - file: index.md
     - file: reconstruction.md
